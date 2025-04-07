@@ -22,8 +22,9 @@ class User(db.Model, UserMixin):
     username: Mapped[str] = mapped_column(String, nullable=False)
     profile_image_url: Mapped[str] = mapped_column(String, nullable=True)
     email: Mapped[str] = mapped_column(String, nullable=True)
-    access_token:Mapped[str] = mapped_column(String,nullable=True)
-    refresh_token:Mapped[str] = mapped_column(String,nullable=True)
+    access_token:Mapped[str] = mapped_column(String,nullable=False)
+    refresh_token:Mapped[str] = mapped_column(String,nullable=False)
+    expires_in:Mapped[int] = mapped_column(Integer,nullable=False)
     created_at: Mapped[DateTime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
 
     def to_dict(self):
@@ -34,5 +35,6 @@ class User(db.Model, UserMixin):
             'profile_image': self.profile_image_url,
             'access_token':self.access_token,
             'refresh_token':self.refresh_token,
+            'expires_in':self.expires_in,
             'created_at': self.created_at.isoformat()  # Convert datetime to ISO format string
         }

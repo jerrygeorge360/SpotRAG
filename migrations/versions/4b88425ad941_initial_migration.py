@@ -1,8 +1,8 @@
 """Initial migration.
 
-Revision ID: 1e3930ec89d9
+Revision ID: 4b88425ad941
 Revises: 
-Create Date: 2025-04-06 12:15:39.545022
+Create Date: 2025-04-08 00:09:00.476075
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '1e3930ec89d9'
+revision = '4b88425ad941'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -23,8 +23,11 @@ def upgrade():
     sa.Column('oauth_provider', sa.Enum('TWITCH', 'GITHUB', 'SPOTIFY', name='providers'), nullable=False),
     sa.Column('oauth_id', sa.String(), nullable=False),
     sa.Column('username', sa.String(), nullable=False),
-    sa.Column('profile_image_url', sa.String(), nullable=False),
+    sa.Column('profile_image_url', sa.String(), nullable=True),
     sa.Column('email', sa.String(), nullable=True),
+    sa.Column('access_token', sa.String(), nullable=False),
+    sa.Column('refresh_token', sa.String(), nullable=False),
+    sa.Column('expires_in', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('oauth_id')

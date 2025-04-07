@@ -8,17 +8,25 @@ from sqlalchemy.exc import SQLAlchemyError
 from spotifyextractors import extract_spotify_user_info
 from oauth import extract_github_info
 import json
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+spotify_client_id = os.getenv('SPOTIFY_CLIENT_ID')
+spotify_client_secret = os.getenv('SPOTIFY_CLIENT_SECRET')
+
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def get_user_data_from_oauth(client, access_token):
+def get_user_data_from_oauth(client, access_token,refresh_token=None):
     if client == 'twitch':
         user_service = TwitchUserService(access_token)
     elif client == 'github':
         user_service = GithubUserService(access_token)
     elif client == 'spotify':
-        user_service = SpotifyUserService(access_token)
+        user_service = SpotifyUserService(access_token,refresh_token=refresh_token,client_id=spotify_client_id,client_secret=spotify_client_secret)
     else:
         raise ValueError("Invalid OAuth provider")
 
@@ -37,15 +45,15 @@ def login_user_process():
 
     access_token = oauth_data.get('access_token')
     client = client
-    # refresh_token = oauth_data.get('refresh_token')
-
+    refresh_token = oauth_data.get('refresh_token')
+    expires_in = oauth_data.get('expires_in')
     try:
         username = None
         user_id = None
         email = None
         profile_image_url = None
 
-        user_data = get_user_data_from_oauth(client, access_token)
+        user_data = get_user_data_from_oauth(client, access_token,refresh_token=refresh_token)
         if client == 'spotify':
             user_data = extract_spotify_user_info(user_data)
             user_id  = user_data.get('id')
@@ -95,6 +103,10 @@ def login_user_process():
         username=username,
         profile_image_url=profile_image_url,
         email=email,
+        access_token=access_token,
+        refresh_token=refresh_token,
+        expires_in=expires_in
+
     )
 
     try:
@@ -115,8 +127,7 @@ def login_user_process():
         "id": existing_user.id,
         "username": existing_user.username,
         "email": existing_user.email,
-        "profile_image_url": existing_user.profile_image_url,  # optional, if you have this
-        "role": existing_user.role
+        "profile_image_url": existing_user.profile_image_url,  # optional, if you have thi
     }
 
     return jsonify({'status':'success','message':'user logged in','data':user_data}),201

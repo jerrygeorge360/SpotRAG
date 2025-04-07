@@ -1,3 +1,4 @@
+import urllib
 from abc import abstractmethod, ABC
 import http.client
 from http.client import HTTPException
@@ -7,6 +8,8 @@ from typing import Union, Dict, Any
 import os
 import json
 import base64
+import  logging
+import time
 
 from dotenv import load_dotenv
 
@@ -511,135 +514,135 @@ class GithubUserService(TwitchUserBase):
 
 class SpotifyUserService(TwitchUserBase):
     base_url = 'api.spotify.com'
+    token_url = 'accounts.spotify.com'
 
-    def __init__(self,access_token:str):
+    def __init__(self,access_token:str,refresh_token:str,client_id:str,client_secret:str):
         self.access_token = access_token
         self.conn = http.client.HTTPSConnection(SpotifyUserService.base_url)
         self.headers = {'Authorization': f'Bearer {self.access_token}', "Accept": "application/json"}
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.refresh_token = refresh_token
+
+    def _retry_request(self, endpoint: str, retries=3, delay=2):
+        attempt = 0
+        while attempt < retries:
+            try:
+                if self.conn:
+                    self.conn.close()
+                self.conn = http.client.HTTPSConnection(self.base_url)  # Reconnect each time
+                self.conn.request('GET', endpoint, headers=self.headers)
+                response = self.conn.getresponse()
+                data = response.read()
+
+                # Handle unauthorized error - refresh token
+                if response.status == 401:
+                    logging.warning("Access token expired. Refreshing token...")
+                    self.refresh_access_token()
+                    attempt += 1
+                    continue  # Try again with new token
+
+                return json.loads(data.decode('utf-8'))
+
+            except (http.client.HTTPException, ConnectionError, TimeoutError) as e:
+                attempt += 1
+                logging.error(f"Attempt {attempt} failed: {e}")
+                if attempt >= retries:
+                    logging.error("Max retries reached. Giving up.")
+                    raise
+                logging.info(f"Retrying in {delay} seconds...")
+                time.sleep(delay)
+                delay *= 2
+
+    def refresh_access_token(self):
+        conn = http.client.HTTPSConnection(self.token_url)
+        creds = f"{self.client_id}:{self.client_secret}"
+        encoded_credentials = base64.b64encode(creds.encode()).decode()
+
+        headers = {
+            "Authorization": f"Basic {encoded_credentials}",
+            "Content-Type": "application/x-www-form-urlencoded"
+        }
+
+        body = urllib.parse.urlencode({
+            "grant_type": "refresh_token",
+            "refresh_token": self.refresh_token
+        })
+
+        conn.request("POST", "/api/token", body, headers)
+        response = conn.getresponse()
+        data = json.loads(response.read().decode("utf-8"))
+
+        if 'access_token' in data:
+            self.access_token = data['access_token']
+            self.headers['Authorization'] = f'Bearer {self.access_token}'
+            return self.access_token
+        else:
+            raise Exception("Failed to refresh token")
 
     # users
     def get_user_details(self):
         endpoint = '/v1/me'
-        self.conn.request('GET', endpoint, headers=self.headers)
-        response = self.conn.getresponse()
-        data = response.read()
-        user_details = json.loads(data.decode('utf-8'))
-        return user_details
+        return self._retry_request(endpoint)
 
     def get_user_top_items(self,offset='',limit='',type_of_item:str='tracks'):
         endpoint = f'/v1/me/top/{type_of_item}?limit={limit}&offset={offset}'
-        self.conn.request('GET', endpoint, headers=self.headers)
-        response = self.conn.getresponse()
-        data = response.read()
-        user_top_items = json.loads(data.decode('utf-8'))
-        return user_top_items
+        return self._retry_request(endpoint)
 
     def targeted_user_details(self,user_id):
         endpoint = f'/v1/users/{user_id}'
-        self.conn.request('GET', endpoint, headers=self.headers)
-        response = self.conn.getresponse()
-        data = response.read()
-        user_details = json.loads(data.decode('utf-8'))
-        return user_details
+        return self._retry_request(endpoint)
 
     def get_followed_artists(self):
         endpoint = '/v1/me/following'
-        self.conn.request('GET', endpoint, headers=self.headers)
-        response = self.conn.getresponse()
-        data = response.read()
-        followed_artists = json.loads(data.decode('utf-8'))
-        return followed_artists
+        return self._retry_request(endpoint)
 
     # albums
     def get_user_albums(self):
         endpoint = '/v1/me/albums'
-        self.conn.request('GET', endpoint, headers=self.headers)
-        response = self.conn.getresponse()
-        data = response.read()
-        user_saved_albums = json.loads(data.decode('utf-8'))
-        return user_saved_albums
+        return self._retry_request(endpoint)
 
     def get_new_releases(self):
         endpoint = '/v1/browse/new-releases'
-        self.conn.request('GET', endpoint, headers=self.headers)
-        response = self.conn.getresponse()
-        data = response.read()
-        new_releases = json.loads(data.decode('utf-8'))
-        return new_releases
+        return self._retry_request(endpoint)
 
     def get_user_audio_books(self):
         endpoint = '/v1/me/audiobooks'
-        self.conn.request('GET', endpoint, headers=self.headers)
-        response = self.conn.getresponse()
-        data = response.read()
-        saved_audio_books = json.loads(data.decode('utf-8'))
-        return saved_audio_books
+        return self._retry_request(endpoint)
 
     def get_user_saved_episodes(self):
         endpoint ='/v1/me/episodes'
-        self.conn.request('GET', endpoint, headers=self.headers)
-        response = self.conn.getresponse()
-        data = response.read()
-        saved_episodes = json.loads(data.decode('utf-8'))
-        return saved_episodes
+        return self._retry_request(endpoint)
 
 
     # player
     def get_user_playback_state(self):
         endpoint ='/v1/me/player'
-        self.conn.request('GET', endpoint, headers=self.headers)
-        response = self.conn.getresponse()
-        data = response.read()
-        playback_state = json.loads(data.decode('utf-8'))
-        return playback_state
+        return self._retry_request(endpoint)
 
     def get_available_devices(self):
         endpoint = '/v1/me/player/devices'
-        self.conn.request('GET', endpoint, headers=self.headers)
-        response = self.conn.getresponse()
-        data = response.read()
-        available_devices = json.loads(data.decode('utf-8'))
-        return available_devices
+        return self._retry_request(endpoint)
 
     def get_recently_played_track(self):
         endpoint = '/v1/me/player/recently-played'
-        self.conn.request('GET', endpoint, headers=self.headers)
-        response = self.conn.getresponse()
-        data = response.read()
-        recently_played = json.loads(data.decode('utf-8'))
-        return recently_played
+        return self._retry_request(endpoint)
 
     def get_users_queue(self):
         endpoint = '/v1/me/player/queue'
-        self.conn.request('GET', endpoint, headers=self.headers)
-        response = self.conn.getresponse()
-        data = response.read()
-        user_queue = json.loads(data.decode('utf-8'))
-        return user_queue
+        return self._retry_request(endpoint)
     # playlist
     def get_user_playlist(self):
         endpoint = '/v1/me/playlists'
-        self.conn.request('GET', endpoint, headers=self.headers)
-        response = self.conn.getresponse()
-        data = response.read()
-        playlists = json.loads(data.decode('utf-8'))
-        return playlists
+        return self._retry_request(endpoint)
 
     def get_featured_playlist(self):
         endpoint = '/v1/browse/featured-playlists'
-        self.conn.request('GET', endpoint, headers=self.headers)
-        response = self.conn.getresponse()
-        data = response.read()
-        featured_playlists = json.loads(data.decode('utf-8'))
-        return featured_playlists
+        return self._retry_request(endpoint)
 
     def get_users_saved_shows(self):
         endpoint = '/v1/me/shows'
-        self.conn.request('GET', endpoint, headers=self.headers)
-        response = self.conn.getresponse()
-        data = response.read()
-        user_shows = json.loads(data.decode('utf-8'))
-        return user_shows
+        return self._retry_request(endpoint)
 
 class TwitchUserService(TwitchUserBase):
     base_url = 'api.twitch.tv'

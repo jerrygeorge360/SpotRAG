@@ -3,6 +3,12 @@ from models import User
 from oauth import SpotifyUserService
 from spotifyextractors import  *
 from chromaclass import client_config,Chroma
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+client_id = os.getenv('SPOTIFY_CLIENT_ID')
+client_secret = os.getenv('SPOTIFY_CLIENT_SECRET')
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -20,7 +26,7 @@ for index,value_tuple in enumerate(access_token):
 
         user_id = value_tuple[2]
 
-        spotify_user_service_instance = SpotifyUserService(value_tuple[0])
+        spotify_user_service_instance = SpotifyUserService(value_tuple[0],refresh_token=value_tuple[1],client_id=client_id,client_secret=client_secret)
         logger.info(f"\n==== Starting processing for user {user_id} ====")
         docs = []
         try:
@@ -69,46 +75,78 @@ for index,value_tuple in enumerate(access_token):
             docs.append([])
             logger.warning(f"[{user_id}] Failed user_audio_books: {e}")
 
+        try:
+            user_saved_episodes = spotify_user_service_instance.get_user_saved_episodes()
+            user_saved_episodes = extract_saved_episode_details(user_saved_episodes)
+            user_saved_episodes_embeddings = get_saved_episode_embeddings(user_saved_episodes)
+            logger.info(f"[{user_id}] Fetched user_saved_episodes")
+        except Exception as e:
+            docs.append([])
+            logger.warning(f"[{user_id}] Failed user_saved_episodes: {e}")
 
-        user_saved_episodes = spotify_user_service_instance.get_user_saved_episodes()
-        user_saved_episodes = extract_saved_episode_details(user_saved_episodes)
-        user_saved_episodes_embeddings = get_saved_episode_embeddings(user_saved_episodes)
-        logger.info(f"[{user_id}] Fetched user_saved_episodes")
+        try:
+            user_playback_state = spotify_user_service_instance.get_user_playback_state()
+            user_playback_state = extract_spotify_playback_status(user_playback_state)
+            user_playback_state_embeddings = get_spotify_playback_status_embeddings(user_playback_state)
+            logger.info(f"[{user_id}] Fetched user_playback_state")
+        except Exception as e:
+            docs.append([])
+            logger.warning(f"[{user_id}] Failed playback_state: {e}")
 
-        user_playback_state = spotify_user_service_instance.get_user_playback_state()
-        user_playback_state = extract_spotify_playback_status(user_playback_state)
-        user_playback_state_embeddings = get_spotify_playback_status_embeddings(user_playback_state)
-        logger.info(f"[{user_id}] Fetched user_playback_state")
+        try:
+            user_available_devices = spotify_user_service_instance.get_available_devices()
+            user_available_devices = extract_device_info(user_available_devices)
+            user_available_devices_embeddings = get_device_info_embeddings(user_available_devices)
+            logger.info(f"[{user_id}] Fetched user_available_devices")
+        except Exception as e:
+            docs.append([])
+            logger.warning(f"[{user_id}] Failed user_available_devices: {e}")
 
-        user_available_devices = spotify_user_service_instance.get_available_devices()
-        user_available_devices = extract_device_info(user_available_devices)
-        user_available_devices_embeddings = get_device_info_embeddings(user_available_devices)
-        logger.info(f"[{user_id}] Fetched user_available_devices")
+        try:
+            user_played_tracks = spotify_user_service_instance.get_recently_played_track()
+            user_played_tracks = extract_recently_played_spotify_tracks(user_played_tracks)
+            user_played_tracks_embeddings = get_recently_played_spotify_tracks_embeddings(user_played_tracks)
+            logger.info(f"[{user_id}] Fetched user_played_tracks")
+        except Exception as e:
+            docs.append([])
+            logger.warning(f"[{user_id}] Failed user_played_track: {e}")
 
-        user_played_tracks = spotify_user_service_instance.get_recently_played_track()
-        user_played_tracks = extract_recently_played_spotify_tracks(user_played_tracks)
-        user_played_tracks_embeddings = get_recently_played_spotify_tracks_embeddings(user_played_tracks)
-        logger.info(f"[{user_id}] Fetched user_played_tracks")
+        try:
+            user_queue = spotify_user_service_instance.get_users_queue()
+            user_queue = extract_currently_playing_and_queue(user_queue)
+            user_queue_embeddings = get_currently_playing_and_queue_embeddings(user_queue)
+            logger.info(f"[{user_id}] Fetched user_queue")
+        except Exception as e:
+            docs.append([])
+            logger.warning(f"[{user_id}] Failed user_queue: {e}")
 
-        user_queue = spotify_user_service_instance.get_users_queue()
-        user_queue = extract_currently_playing_and_queue(user_queue)
-        user_queue_embeddings = get_currently_playing_and_queue_embeddings(user_queue)
-        logger.info(f"[{user_id}] Fetched user_queue")
 
-        user_playlist = spotify_user_service_instance.get_user_playlist()
-        user_playlist = extract_user_playlists_data(user_playlist)
-        user_playlist_embeddings = get_user_playlists_embeddings(user_playlist)
-        logger.info(f"[{user_id}] Fetched user_playlist")
+        try:
+            user_playlist = spotify_user_service_instance.get_user_playlist()
+            user_playlist = extract_user_playlists_data(user_playlist)
+            user_playlist_embeddings = get_user_playlists_embeddings(user_playlist)
+            logger.info(f"[{user_id}] Fetched user_playlist")
+        except Exception as e:
+            docs.append([])
+            logger.warning(f"[{user_id}] Failed user_playlist: {e}")
 
-        featured_playlist = spotify_user_service_instance.get_featured_playlist()
-        featured_playlist = extract_featured_playlists_data(featured_playlist)
-        featured_playlist_embeddings = get_featured_playlists_embeddings(featured_playlist)
-        logger.info(f"[{user_id}] Fetched featured_playlist")
+        try:
+            featured_playlist = spotify_user_service_instance.get_featured_playlist()
+            featured_playlist = extract_featured_playlists_data(featured_playlist)
+            featured_playlist_embeddings = get_featured_playlists_embeddings(featured_playlist)
+            logger.info(f"[{user_id}] Fetched featured_playlist")
+        except Exception as e:
+            docs.append([])
+            logger.warning(f"[{user_id}] Failed featured_playlist: {e}")
 
-        user_saved_shows= spotify_user_service_instance.get_users_saved_shows()
-        user_saved_shows = extract_saved_shows_data(user_saved_shows)
-        user_saved_shows_embeddings = get_saved_shows_embeddings(user_saved_shows)
-        logger.info(f"[{user_id}] Fetched user_saved_shows")
+        try:
+            user_saved_shows= spotify_user_service_instance.get_users_saved_shows()
+            user_saved_shows = extract_saved_shows_data(user_saved_shows)
+            user_saved_shows_embeddings = get_saved_shows_embeddings(user_saved_shows)
+            logger.info(f"[{user_id}] Fetched user_saved_shows")
+        except Exception as e:
+            docs.append([])
+            logger.warning(f"[{user_id}] Failed user_saved_shows: {e}")
 
         logger.info(f"\n==== ended processing for user {user_id} ====")
 
@@ -120,15 +158,19 @@ for index,value_tuple in enumerate(access_token):
             if not docs[pos]:  # Skip if document list is empty or None
                 logger.info(f"[{user_id}] Skipped empty collection: {collection_name}")
                 continue
-            if chroma.collection_exist(f'{user_id}{collection_name}'):
-                chroma.use_collection(f'{user_id}{collection_name}')
-                chroma.update_to_collection({'documents':docs[pos],'metadatas': [{'source': collection_name} for _ in docs[pos]],'ids': [f'{collection_name}_{pos}_{i}' for i in range(len(docs[pos]))]},f'{user_id}{collection_name}')
-                logger.info(f"[{user_id}] Updated collection: {collection_name} with {len(docs[pos])} documents")
 
-            else:
-                chroma.create_collection(f'{user_id}{collection_name}',metadata={'type':collection_name})
-                chroma.add_to_collection({'documents':docs[pos],'metadatas': [{'source': collection_name} for _ in docs[pos]],'ids': [f'{collection_name}_{pos}_{i}' for i in range(len(docs[pos]))]},f'{user_id}{collection_name}')
-                logger.info(f"[{user_id}] Created collection: {user_id}{collection_name} with {len(docs[pos])} documents")
+            try:
+                if chroma.collection_exist(f'{user_id}{collection_name}'):
+                    chroma.use_collection(f'{user_id}{collection_name}')
+                    chroma.update_to_collection({'documents':docs[pos],'metadatas': [{'source': collection_name} for _ in docs[pos]],'ids': [f'{collection_name}_{pos}_{i}' for i in range(len(docs[pos]))]},f'{user_id}{collection_name}')
+                    logger.info(f"[{user_id}] Updated collection: {collection_name} with {len(docs[pos])} documents")
+
+                else:
+                    chroma.create_collection(f'{user_id}{collection_name}',metadata={'type':collection_name})
+                    chroma.add_to_collection({'documents':docs[pos],'metadatas': [{'source': collection_name} for _ in docs[pos]],'ids': [f'{collection_name}_{pos}_{i}' for i in range(len(docs[pos]))]},f'{user_id}{collection_name}')
+                    logger.info(f"[{user_id}] Created collection: {user_id}{collection_name} with {len(docs[pos])} documents")
+            except Exception as e:
+                logger.error(f"[{user_id}] Error handling collection {collection_name}: {e}")
     except Exception as e:
         logger.error(f"[GLOBAL] Error processing user {user_id}: {e}")
 
