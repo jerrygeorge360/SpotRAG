@@ -681,4 +681,3 @@ def get_saved_shows_embeddings(shows_json):
         ]
         for show in shows_data
     ]
-

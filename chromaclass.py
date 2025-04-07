@@ -3,6 +3,8 @@ from sentence_transformers import SentenceTransformer
 from chromadb.utils.embedding_functions import EmbeddingFunction
 import chromadb
 
+from datapipeline import collection_exists
+
 model = SentenceTransformer('paraphrase-albert-small-v2')
 
 class SentenceTransformerEmbeddingFunction(EmbeddingFunction):
@@ -79,7 +81,6 @@ class Chroma(ChromaObj):
         collection = self._get_collection(name)
         collection.add(
             documents=param.get('documents'),
-            embeddings=param.get('embeddings'),
             metadatas=param.get('metadatas'),
             ids=param.get('ids')
         )
@@ -88,7 +89,6 @@ class Chroma(ChromaObj):
         collection = self._get_collection(name)
         collection.update(
             documents=param.get('documents'),
-            embeddings=param.get('embeddings'),
             metadatas=param.get('metadatas'),
             ids=param.get('ids')
         )
@@ -117,3 +117,8 @@ class Chroma(ChromaObj):
     def count(self,name:str=None):
         collection = self._get_collection(name)
         return collection.count()
+
+    def collection_exist(self,name:str):
+        collection_list = self.client.list_collections()
+        collection_status = any(col.name == name for col in collection_list)
+        return collection_status
