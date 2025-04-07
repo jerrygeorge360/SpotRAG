@@ -1,15 +1,28 @@
 from abc import ABC, abstractmethod
 from sentence_transformers import SentenceTransformer
+from chromadb.utils.embedding_functions import EmbeddingFunction
 import chromadb
 
 model = SentenceTransformer('paraphrase-albert-small-v2')
 
+class SentenceTransformerEmbeddingFunction(EmbeddingFunction):
+    def __init__(self, model):
+        self.model = model
+
+    def __call__(self, input: list[str]) -> list[list[float]]:
+        return self.model.encode(input).tolist()
+
+
 client_config = {
     'chroma': {
         'client': lambda: chromadb.PersistentClient(),
-        'embedding_function': lambda: model.encode
+        'embedding_function': lambda: SentenceTransformerEmbeddingFunction(model)
     }
 }
+
+
+
+
 
 class ChromaObj(ABC):
     @abstractmethod
@@ -96,3 +109,11 @@ class Chroma(ChromaObj):
             query_texts=param.get('query'),
             n_results=param.get('n_results', 5)
         )
+
+    def peek(self,name: str = None):
+        collection = self._get_collection(name)
+        return collection.peek()
+
+    def count(self,name:str=None):
+        collection = self._get_collection(name)
+        return collection.count()
