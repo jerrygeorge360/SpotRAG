@@ -5,8 +5,6 @@ model = SentenceTransformer("paraphrase-albert-small-v2")
 client = chromadb.PersistentClient()
 
 
-
-
 # Sample sentences
 sentences = [{'jerry':"I am building a RAG system."}, {"henry":"This is another sentence."}, {"runtime":"Embedding systems are fun!"}]
 
