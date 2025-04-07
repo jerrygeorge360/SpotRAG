@@ -1,3 +1,6 @@
 .venv
 .env
 .idea
+__pycache__
+instance
+qodana.yaml

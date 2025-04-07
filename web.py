@@ -1,15 +1,33 @@
-from flask import Blueprint, render_template, request, url_for, session, redirect, flash, jsonify
+from flask import Blueprint, render_template, request, url_for, session, redirect, flash, jsonify, Flask
+from flask_login import logout_user,LoginManager
+from flask_migrate import Migrate
+from helpers import login_user_process
+from oauth import OauthFacade
 from dotenv import load_dotenv
+from models import User,db
 import logging
 import os
 
 load_dotenv()
+app = Flask(__name__)
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DB_URI')
+db.init_app(app)
+migrate = Migrate(app, db)
 
-GITHUB_CLIENT_ID = os.getenv('GITHUB_ID')
-GITHUB_CLIENT_SECRET = os.getenv('GITHUB_SECRET_KEY')
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+
+
+
+SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
+SPOTIFY_SECRET_KEY = os.getenv('SPOTIFY_CLIENT_SECRET')
 SPOTIFY_SCOPE =[
     "user-read-private",
     "user-read-email",
@@ -32,6 +50,54 @@ SPOTIFY_SCOPE =[
 ]
 
 
+# User loader for Flask-Login
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(user_id)
+
+# Error Handlers
+@app.errorhandler(401)
+def unauthorized(error):
+    logger.info(error)
+    return jsonify({'status': 'failed', 'error': 'You need to be logged in to access this resource'}), 401
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+
+@login_manager.unauthorized_handler
+def unauthorized():
+    flash("You need to log in to access this page.", "warning")
+    return redirect(url_for(login_manager.login_view))
+
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/login')
+def login():
+    """
+    Renders the login page for the application.
+
+    This route serves the login page where users can authenticate themselves
+    using OAuth providers like Twitch, GitHub, and Spotify.
+
+    Returns:
+        render_template: Renders the 'login.html' template with authentication links.
+    """
+    logger.info('Rendering login page.')
+
+    auth_links = {
+        # 'github_link': OauthFacade('github', response_type="code", scope=["user:read:email"]).get_auth_link(),
+        # 'twitch_link': OauthFacade('twitch', response_type="code", scope=["user:read:email"]).get_auth_link(),
+        'spotify_link': OauthFacade('spotify', response_type="code", scope=SPOTIFY_SCOPE).get_auth_link()
+    }
+
+    return render_template('login.html', auth_links=auth_links)
+
+@app.route('/callback')
 def callback_route():
     code = request.args.get('code')
     state = request.args.get('state')
@@ -45,44 +111,44 @@ def callback_route():
     if error:
         logger.error(f'Error during OAuth callback: {error_description}')
         flash(f'Error: {error_description}', 'error')
-        return redirect(url_for('views.login'))
+        return redirect('/login')
 
     if code:
         data = {'code': code, 'state': state, 'scope': scope}
         try:
-            oauth_obj = OauthFacade(client=client, response_type="code", scope=["user:read:email"])
+            oauth_obj = OauthFacade(client=client, response_type="code", scope=scope)
             access_token = oauth_obj.get_access_token(data=data)
             access_data = {'access_token': access_token, 'client': client}
             session['oauth_token_data'] = access_data
             logger.info(f'Saved token: {access_token}')
 
-            response = login_user_()
+            response = login_user_process()
             status_code = response[1] if isinstance(response, tuple) else response
             logger.info(response)
             if status_code == 201:
                 flash('Logged in successfully!', 'success')
-                return redirect(url_for('views.podcast'))
+                return redirect('/')
             elif hasattr(response, 'status') and response.status == 'error':
                 flash('Failed to log in.', 'error')
-                return redirect(url_for('views.login'))
+                return redirect('/login')
 
             else:
                 logger.warning('Unexpected login response.')
                 flash('An unexpected error occurred during login.', 'error')
-                return redirect(url_for('views.login'))
+                return redirect('/login')
 
         except Exception as e:
             logger.exception('Failed during token handling.')
             flash('An error occurred during authentication.', 'error')
-            return redirect(url_for('views.login'))
+            return redirect('/login')
 
     # Fallback for any unexpected scenario
     flash('Invalid or missing code parameter.', 'error')
-    return redirect(url_for('views.login'))
+    return redirect('/login')
 
 
 
-@views_bp.route('/logout')
+@app.route('/logout')
 def logout():
     """
     Logs the user out of the application, invalidates the GitHub OAuth token if it exists,
@@ -103,32 +169,17 @@ def logout():
     Returns:
         redirect: Redirects to the home page (`views.index`).
     """
+
+
     logger.info('User initiated logout.')
 
     flash('You have been logged out successfully.', 'success')
 
-    access_data = session.pop('oauth_token_data', None)
-    if access_data and 'access_token' in access_data:
-        try:
-            token = access_data['access_token']
-
-            response = requests.delete(
-                f'https://api.github.com/applications/{GITHUB_CLIENT_ID}/grant',
-                auth=(GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET),
-                json={"access_token": token}
-            )
-
-            if response.status_code == 204:
-                logger.info('GitHub OAuth token successfully invalidated.')
-            else:
-                logger.warning(
-                    f'Failed to invalidate GitHub OAuth token. Status: {response.status_code}, Response: {response.text}'
-                )
-
-        except Exception as e:
-            logger.exception('Error while invalidating GitHub OAuth token.')
-
+    session.pop('oauth_token_data', None)
     logout_user()
     session.clear()
 
-    return redirect(url_for('views.index'))
+    return redirect('/')
+
+if __name__  == '__main__':
+    app.run(debug=True)

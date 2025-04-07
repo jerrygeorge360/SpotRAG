@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OAuth Login</title>
+   <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        .container {
+            text-align: center;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+
+        p {
+            font-size: 1.2rem;
+        }
+
+        .auth-links {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+
+        .auth-button {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border-radius: 5px;
+            background-color: #444;
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+
+        .auth-button:hover {
+            background-color: #555;
+        }
+
+        .auth-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+        }
+
+        .github {
+            background-color: #333;
+        }
+
+        .twitch {
+            background-color: #9146FF;
+        }
+
+        .spotify {
+            background-color: #1DB954;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Login to Your Account</h1>
+
+        <p>Please select a service to log in:</p>
+
+        <div class="auth-links">
+            <!-- GitHub Login -->
+            <a href="{{ auth_links['github_link'] }}" class="auth-button github">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" alt="GitHub" class="auth-icon">
+                Log in with GitHub
+            </a>
+
+            <!-- Twitch Login -->
+            <a href="{{ auth_links['twitch_link'] }}" class="auth-button twitch">
+                <img src="https://static.twitch.tv/astro/brands/global/twitch-logo.svg" class="auth-icon">
+                Log in with Twitch
+            </a>
+
+            <!-- Spotify Login -->
+            <a href="{{ auth_links['spotify_link'] }}" class="auth-button spotify">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/1/1e/Spotify_logo_with_text.svg" class="auth-icon">
+                Log in with Spotify
+            </a>
+        </div>
+    </div>
+
+
+</body>
+</html>

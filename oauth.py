@@ -404,89 +404,6 @@ class SpotifyOauthAccessCode(TwitchOauthBase):
         authorize_obj.access_token = access_token
         return json_data
 
-# class OauthFacade:
-#
-#     twitch_client_id = os.getenv('TWITCH_CLIENT_ID')
-#     twitch_client_secret = os.getenv('TWITCH_CLIENT_SECRET_KEY')
-#     twitch_redirect_uri = os.getenv('TWITCH_REDIRECT_URI')
-#
-#     github_client_id = os.getenv('GITHUB_ID')
-#     github_client_secret=os.getenv('GITHUB_SECRET_KEY')
-#     github_redirect_uri=os.getenv('GITHUB_REDIRECT_URI')
-#
-#     spotify_client_id = os.getenv('SPOTIFY_CLIENT_ID')
-#     spotify_client_secret = os.getenv('SPOTIFY_CLIENT_SECRET_KEY')
-#     spotify_redirect_uri = os.getenv('SPOTIFY_REDIRECT_URI')
-#
-#
-#     # Check if the environment variables are set
-#     if not all([twitch_client_id, twitch_client_secret, twitch_redirect_uri]):
-#         raise EnvironmentError("Missing required environment variables for Twitch OAuth.")
-#     if not all([github_client_id, github_client_secret, github_redirect_uri]):
-#         raise EnvironmentError("Missing required environment variables for Github OAuth.")
-#     if not all([spotify_client_id, spotify_client_secret, spotify_redirect_uri]):
-#         raise EnvironmentError("Missing required environment variables for Spotify OAuth.")
-#
-#     def __new__(cls, *args, **kwargs):
-#         if not hasattr(cls, 'instance'):
-#             cls.instance = super(OauthFacade, cls).__new__(cls)
-#         return cls.instance
-#
-#     def __init__(self,client:str=None, response_type: str = None, scope: list = None):
-#         self.response_type = response_type
-#         self.scope = scope
-#         print(client)
-#         if client == 'twitch':
-#             self.authorize_obj = Authorization(
-#                 client_id=OauthFacade.twitch_client_id,
-#                 client_secret=OauthFacade.twitch_client_secret,
-#                 redirect_uri=OauthFacade.twitch_redirect_uri,
-#                 response_type=self.response_type,
-#                 scope=scope
-#             )
-#             self.client = TwitchOauthAccessCode()
-#         elif client =='github':
-#             self.authorize_obj = Authorization(
-#                 client_id=OauthFacade.github_client_id,
-#                 client_secret=OauthFacade.github_client_secret,
-#                 redirect_uri=OauthFacade.github_redirect_uri,
-#                 response_type=self.response_type,
-#                 scope=scope
-#             )
-#             self.client = GithubOauthAccessCode()
-#         elif client == 'spotify':
-#             self.authorize_obj = Authorization(
-#                 client_id=OauthFacade.spotify_client_id,
-#                 client_secret=OauthFacade.spotify_client_secret,
-#                 redirect_uri=OauthFacade.spotify_redirect_uri,
-#                 response_type=self.response_type,
-#                 scope=scope
-#             )
-#             self.client = SpotifyOauthAccessCode()
-#         else:
-#             raise ValueError('must be either twitch  or github or spotify keyword')
-#
-#     def get_auth_link(self):
-#         authorization_url = self.client.authorize(authorize_obj=self.authorize_obj)
-#         print(authorization_url)
-#         return authorization_url
-#
-#     def _get_access_code(self, **kwargs):
-#         self.client.get_redirect_data(authorize_obj=self.authorize_obj, data=kwargs['data'])
-#
-#     def get_access_token(self, **kwargs):
-#
-#         if kwargs['data'].get('code'):
-#             self._get_access_code(data=kwargs['data'])
-#             access_token_data = self.client.get_token(authorize_obj=self.authorize_obj)
-#             return access_token_data
-#         else:
-#             self._get_access_code(data=kwargs['data'])
-#             return {'msg': 'authorization failed'}
-#
-#     def refresh_token(self):
-#         self.client.refresh_access_token(self.authorize_obj)
-
 class OauthFacade:
     OAUTH_CONFIG = {
         'twitch': {
@@ -508,7 +425,7 @@ class OauthFacade:
         'spotify': {
             'env': {
                 'id': 'SPOTIFY_CLIENT_ID',
-                'secret': 'SPOTIFY_CLIENT_SECRET_KEY',
+                'secret': 'SPOTIFY_CLIENT_SECRET',
                 'redirect': 'SPOTIFY_REDIRECT_URI'
             },
             'class': lambda: SpotifyOauthAccessCode()
@@ -569,9 +486,6 @@ class OauthFacade:
         """Refresh access token (if supported)."""
         return self.client.refresh_access_token(self.authorize_obj)
 
-
-
-
 class TwitchUserBase(ABC):
     @abstractmethod
     def get_user_details(self):
@@ -602,6 +516,7 @@ class SpotifyUserService(TwitchUserBase):
         self.access_token = access_token
         self.conn = http.client.HTTPSConnection(SpotifyUserService.base_url)
         self.headers = {'Authorization': f'Bearer {self.access_token}', "Accept": "application/json"}
+
     # users
     def get_user_details(self):
         endpoint = '/v1/me'
@@ -701,7 +616,7 @@ class SpotifyUserService(TwitchUserBase):
         data = response.read()
         user_queue = json.loads(data.decode('utf-8'))
         return user_queue
-
+    # playlist
     def get_user_playlist(self):
         endpoint = '/v1/me/playlists'
         self.conn.request('GET', endpoint, headers=self.headers)
@@ -762,3 +677,15 @@ def extract_github_info(data: Dict[str, Any], key: str) -> Union[str, None]:
             return 'none'
         return user_info
     return None
+
+def extract_spotify_info(data: Dict[str, Any], key: str) -> Union[str, None]:
+    user_info = None
+    if data:
+        user_data = data
+        user_info = user_data.get(key)
+        if user_info is None:
+            print(f"Key '{key}' not found in user data.")
+            return 'none'
+        return user_info
+    return None
+
