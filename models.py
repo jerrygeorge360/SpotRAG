@@ -22,6 +22,8 @@ class User(db.Model, UserMixin):
     username: Mapped[str] = mapped_column(String, nullable=False)
     profile_image_url: Mapped[str] = mapped_column(String, nullable=True)
     email: Mapped[str] = mapped_column(String, nullable=True)
+    access_token:Mapped[str] = mapped_column(String,nullable=True)
+    refresh_token:Mapped[str] = mapped_column(String,nullable=True)
     created_at: Mapped[DateTime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
 
     def to_dict(self):
@@ -30,5 +32,7 @@ class User(db.Model, UserMixin):
             'username': self.username,
             'email': self.email,
             'profile_image': self.profile_image_url,
+            'access_token':self.access_token,
+            'refresh_token':self.refresh_token,
             'created_at': self.created_at.isoformat()  # Convert datetime to ISO format string
         }

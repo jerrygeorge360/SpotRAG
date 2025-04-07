@@ -1,4 +1,5 @@
-from chromaclass import  *
+from chromaclass import Chroma, client_config
+
 chroma = Chroma(client_config)
 
 # Create and switch collections
