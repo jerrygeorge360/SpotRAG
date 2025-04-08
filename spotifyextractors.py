@@ -16,7 +16,7 @@ def extract_spotify_user_info(user_data):
         "explicit_content_filter_locked": user_data.get("explicit_content", {}).get("filter_locked"),
     }
 def get_spotify_user_embeddings(user_data):
-    user_info = extract_spotify_user_info(user_data)
+    user_info = user_data
     return [user_info.get("id"), user_info.get("display_name"), user_info.get("email"),
             user_info.get("country"), user_info.get("profile_url"), user_info.get("product"),
             user_info.get("followers"), user_info.get("profile_image"),
@@ -39,7 +39,7 @@ def extract_spotify_items(data):
 
     return extracted_items
 def get_spotify_items_embeddings(data):
-    items_info = extract_spotify_items(data)
+    items_info = data
     return [
         [
             item.get("name"), item.get("spotify_url"), item.get("image_url"), item.get("popularity"),
@@ -61,7 +61,7 @@ def extract_targeted_spotify_user_info(data):
         "type": data.get("type")
     }
 def get_targeted_spotify_user_embeddings(data):
-    user_info = extract_targeted_spotify_user_info(data)
+    user_info = data
     return [user_info.get("display_name"), user_info.get("spotify_url"),
             user_info.get("followers"), user_info.get("profile_image"), user_info.get("id"),
             user_info.get("uri"), user_info.get("href"), user_info.get("type")]
@@ -87,7 +87,7 @@ def extract_spotify_artists_info(data):
 
     return extracted
 def get_spotify_artists_embeddings(data):
-    artists_info = extract_spotify_artists_info(data)
+    artists_info = data
     return [
         [
             artist.get("name"), artist.get("spotify_url"), artist.get("image"), artist.get("popularity"),
@@ -100,65 +100,42 @@ def get_spotify_artists_embeddings(data):
 
 # albums
 def extract_album_info(data):
-    album_info = {
-        "name": data.get("name"),
-        "album_type": data.get("album_type"),
-        "total_tracks": data.get("total_tracks"),
-        "release_date": data.get("release_date"),
-        "release_precision": data.get("release_date_precision"),
-        "available_markets": data.get("available_markets", []),
-        "spotify_url": data.get("external_urls", {}).get("spotify"),
-        "image": data.get("images", [{}])[0].get("url") if data.get("images") else None,
-        "id": data.get("id"),
-        "uri": data.get("uri"),
-        "label": data.get("label"),
-        "popularity": data.get("popularity", 0),
-        "restrictions": data.get("restrictions", {}).get("reason"),
-        "copyrights": [c.get("text") for c in data.get("copyrights", [])],
-        "external_ids": data.get("external_ids", {}),
-        "genres": data.get("genres", []),
-        "artists": [
-            {
-                "name": artist.get("name"),
-                "id": artist.get("id"),
-                "uri": artist.get("uri"),
-                "spotify_url": artist.get("external_urls", {}).get("spotify")
-            }
-            for artist in data.get("artists", [])
-        ],
-        "tracks": []
-    }
+    flattened = []
+    for item in data.get("items", []):
+        album = item.get("album", {})
+        for track in album.get("tracks", {}).get("items", []):
+            flattened.append({
+                "added_at": item.get("added_at"),
+                "album_name": album.get("name"),
+                "album_id": album.get("id"),
+                "album_url": album.get("external_urls", {}).get("spotify"),
+                "album_release_date": album.get("release_date"),
+                "album_image": album.get("images", [{}])[0].get("url"),
+                "track_name": track.get("name"),
+                "track_id": track.get("id"),
+                "track_url": track.get("external_urls", {}).get("spotify"),
+                "track_duration_ms": track.get("duration_ms"),
+                "track_number": track.get("track_number"),
+                "artist_name": track.get("artists", [{}])[0].get("name"),
+                "artist_id": track.get("artists", [{}])[0].get("id"),
+                "artist_url": track.get("artists", [{}])[0].get("external_urls", {}).get("spotify"),
+            })
+    return flattened
+def get_album_embeddings(docs: list[dict]) -> list[str]:
+    formatted = []
+    for doc in docs:
+        parts = [
+            doc.get("track_name", ""),
+            doc.get("artist_name", ""),
+            doc.get("album_name", ""),
+            doc.get("album_release_date", ""),
+            doc.get("track_url", ""),
+            doc.get("album_url", ""),
+        ]
+        # Join parts into one string
+        formatted.append(" - ".join(part for part in parts if part))
+    return formatted
 
-    track_items = data.get("tracks", {}).get("items", [])
-    for track in track_items:
-        album_info["tracks"].append({
-            "name": track.get("name"),
-            "duration_ms": track.get("duration_ms"),
-            "explicit": track.get("explicit", False),
-            "track_number": track.get("track_number"),
-            "preview_url": track.get("preview_url"),
-            "spotify_url": track.get("external_urls", {}).get("spotify"),
-            "artists": [
-                {
-                    "name": a.get("name"),
-                    "id": a.get("id"),
-                    "uri": a.get("uri"),
-                    "spotify_url": a.get("external_urls", {}).get("spotify")
-                }
-                for a in track.get("artists", [])
-            ]
-        })
-
-    return album_info
-def get_album_embeddings(data):
-    album_info = extract_album_info(data)
-    return [
-        album_info.get("name"), album_info.get("album_type"), album_info.get("total_tracks"),
-        album_info.get("release_date"), album_info.get("release_precision"), ", ".join(album_info.get("available_markets")),
-        album_info.get("spotify_url"), album_info.get("image"), album_info.get("id"), album_info.get("uri"),
-        album_info.get("label"), album_info.get("popularity"), album_info.get("restrictions"),
-        ", ".join(album_info.get("copyrights")), str(album_info.get("external_ids")), ", ".join(album_info.get("genres"))
-    ]
 
 
 def extract_new_releases(data):
@@ -203,7 +180,7 @@ def extract_new_releases(data):
         "albums": albums
     }
 def get_new_releases_embeddings(data):
-    new_releases_info = extract_new_releases(data)
+    new_releases_info = data
     return [
         [
             album.get("name"), album.get("album_type"), album.get("total_tracks"), album.get("release_date"),
@@ -259,7 +236,7 @@ def extract_user_audiobooks_list(data):
         "audiobooks": audiobooks
     }
 def get_user_audiobooks_embeddings(data):
-    audiobooks_info = extract_user_audiobooks_list(data)
+    audiobooks_info = data
     return [
         [
             audiobook.get("id"), audiobook.get("name"), audiobook.get("description"),
@@ -320,7 +297,7 @@ def extract_saved_episode_details(data):
         "episodes": episodes
     }
 def get_saved_episode_embeddings(data):
-    episodes_info = extract_saved_episode_details(data)
+    episodes_info = data
     return [
         [
             episode.get("added_at"), episode.get("episode", {}).get("id"),
@@ -401,45 +378,63 @@ def extract_spotify_playback_status(data):
 
     return playback_status
 def get_spotify_playback_status_embeddings(data):
-    playback_status_info = extract_spotify_playback_status(data)
+    playback_status_info = data
+
     return [
-        playback_status_info.get("device", {}).get("id"), playback_status_info.get("device", {}).get("name"),
-        playback_status_info.get("device", {}).get("type"), playback_status_info.get("device", {}).get("volume_percent"),
-        playback_status_info.get("repeat_state"), playback_status_info.get("shuffle_state"),
-        playback_status_info.get("context", {}).get("type"), playback_status_info.get("context", {}).get("href"),
-        playback_status_info.get("context", {}).get("external_urls"), playback_status_info.get("timestamp"),
-        playback_status_info.get("progress_ms"), playback_status_info.get("is_playing"),
-        playback_status_info.get("currently_playing_type"), playback_status_info.get("item", {}).get("name"),
-        playback_status_info.get("item", {}).get("spotify_url"), playback_status_info.get("item", {}).get("id")
+        str(playback_status_info.get("device", {}).get("id", "")),
+        str(playback_status_info.get("device", {}).get("name", "")),
+        str(playback_status_info.get("device", {}).get("type", "")),
+        str(playback_status_info.get("device", {}).get("volume_percent", "")),
+        str(playback_status_info.get("repeat_state", "")),
+        str(playback_status_info.get("shuffle_state", "")),
+        str(playback_status_info.get("context", {}).get("type", "")),
+        str(playback_status_info.get("context", {}).get("href", "")),
+        str(playback_status_info.get("context", {}).get("external_urls", "")),
+        str(playback_status_info.get("timestamp", "")),
+        str(playback_status_info.get("progress_ms", "")),
+        str(playback_status_info.get("is_playing", "")),
+        str(playback_status_info.get("currently_playing_type", "")),
+        str(playback_status_info.get("item", {}).get("name", "")),
+        str(playback_status_info.get("item", {}).get("external_urls", "")),  # fix key name
+        str(playback_status_info.get("item", {}).get("id", ""))
     ]
 
 
 def extract_device_info(devices):
     device_info = []
-
-    for device in devices:
-        device_data = {
-            "id": device.get("id"),
-            "is_active": device.get("is_active"),
-            "is_private_session": device.get("is_private_session"),
-            "is_restricted": device.get("is_restricted"),
-            "name": device.get("name"),
-            "type": device.get("type"),
-            "volume_percent": device.get("volume_percent"),
-            "supports_volume": device.get("supports_volume")
-        }
-        device_info.append(device_data)
-
+    devices = devices.get('devices')
+    if devices:
+        for device in devices:
+            device_data = {
+                "id": device.get("id"),
+                "is_active": device.get("is_active"),
+                "is_private_session": device.get("is_private_session"),
+                "is_restricted": device.get("is_restricted"),
+                "name": device.get("name"),
+                "type": device.get("type"),
+                "volume_percent": device.get("volume_percent"),
+                "supports_volume": device.get("supports_volume")
+            }
+            device_info.append(device_data)
     return device_info
 def get_device_info_embeddings(devices):
-    device_info = extract_device_info(devices)
+    if not isinstance(devices, list):
+        print("Expected a list of devices but got:", type(devices))
+        return []
+
+
     return [
         [
-            device.get("id"), device.get("name"), device.get("type"), device.get("volume_percent"),
-            device.get("supports_volume"), device.get("is_active"), device.get("is_private_session"),
-            device.get("is_restricted")
+            f"id:{device.get('id', '')}",
+            f"name:{device.get('name', '')}",
+            f"type:{device.get('type', '')}",
+            f"volume_percent:{device.get('volume_percent', '')}",
+            f"supports_volume:{device.get('supports_volume', '')}",
+            f"is_active:{device.get('is_active', '')}",
+            f"is_private_session:{device.get('is_private_session', '')}",
+            f"is_restricted:{device.get('is_restricted', '')}"
         ]
-        for device in device_info
+        for device in devices
     ]
 
 
@@ -471,21 +466,26 @@ def extract_recently_played_spotify_tracks(data):
 
     return processed_data
 def get_recently_played_spotify_tracks_embeddings(data):
-    recently_played_info = extract_recently_played_spotify_tracks(data)
+    recently_played_info = data
     return [
         [
             track.get("track_name"), track.get("track_id"), track.get("album_name"), track.get("album_id"),
             track.get("album_type"), track.get("release_date"), track.get("album_image_url"),
-            ", ".join(track.get("artists"))
+            ", ".join([a.get("name", "") for a in track.get("artists", [])])
         ]
         for track in recently_played_info
     ]
 
 
+
 def extract_currently_playing_and_queue(data):
     # Extract currently playing track info
+
     currently_playing = data.get("currently_playing", {})
+    if not currently_playing:
+        return []
     track_info = currently_playing.get("album", {})
+
 
     # Extract useful track details
     track_data = {
@@ -529,33 +529,47 @@ def extract_currently_playing_and_queue(data):
     track_data["queue"] = queue_data
     return track_data
 def get_currently_playing_and_queue_embeddings(data):
-    track_data = extract_currently_playing_and_queue(data)
+    if not data:
+        return []
 
     # Format for currently playing track
-    currently_playing = track_data.get("currently_playing", {})
+    currently_playing = data.get("currently_playing", {})
     currently_playing_info = [
-        currently_playing.get("track_name"), currently_playing.get("track_id"),
-        currently_playing.get("album_name"), currently_playing.get("album_id"),
-        currently_playing.get("album_type"), currently_playing.get("release_date"),
-        currently_playing.get("album_image_url"),
-        ", ".join([artist.get("name") for artist in currently_playing.get("artists", [])]),
-        currently_playing.get("is_playable"), currently_playing.get("duration_ms"),
-        currently_playing.get("explicit"), currently_playing.get("external_urls")
+        f"track_name:{currently_playing.get('track_name', '')}",
+        f"track_id:{currently_playing.get('track_id', '')}",
+        f"album_name:{currently_playing.get('album_name', '')}",
+        f"album_id:{currently_playing.get('album_id', '')}",
+        f"album_type:{currently_playing.get('album_type', '')}",
+        f"release_date:{currently_playing.get('release_date', '')}",
+        f"album_image_url:{currently_playing.get('album_image_url', '')}",
+        f"artists:{', '.join([artist.get('name', '') for artist in currently_playing.get('artists', [])])}",
+        f"is_playable:{currently_playing.get('is_playable', '')}",
+        f"duration_ms:{currently_playing.get('duration_ms', '')}",
+        f"explicit:{currently_playing.get('explicit', '')}",
+        f"external_urls:{currently_playing.get('external_urls', '')}",
     ]
 
     # Format for queue
-    queue_data = [
-        [
-            item.get("track_name"), item.get("track_id"), item.get("album_name"), item.get("album_id"),
-            item.get("album_type"), item.get("release_date"), item.get("album_image_url"),
-            ", ".join([artist.get("name") for artist in item.get("artists", [])]),
-            item.get("is_playable"), item.get("duration_ms"), item.get("explicit"),
-            item.get("external_urls")
+    queue_data = []
+    for item in data.get("queue", []):
+        queue_info = [
+            f"track_name:{item.get('track_name', '')}",
+            f"track_id:{item.get('track_id', '')}",
+            f"album_name:{item.get('album_name', '')}",
+            f"album_id:{item.get('album_id', '')}",
+            f"album_type:{item.get('album_type', '')}",
+            f"release_date:{item.get('release_date', '')}",
+            f"album_image_url:{item.get('album_image_url', '')}",
+            f"artists:{', '.join([artist.get('name', '') for artist in item.get('artists', [])])}",
+            f"is_playable:{item.get('is_playable', '')}",
+            f"duration_ms:{item.get('duration_ms', '')}",
+            f"explicit:{item.get('explicit', '')}",
+            f"external_urls:{item.get('external_urls', '')}",
         ]
-        for item in track_data.get("queue", [])
-    ]
+        queue_data.append(queue_info)
 
     return [currently_playing_info, queue_data]
+
 
 
 # playlist
@@ -586,7 +600,7 @@ def extract_user_playlists_data(json_data):
     # Return the extracted list of shows
     return shows
 def get_user_playlists_embeddings(json_data):
-    playlists_data = extract_user_playlists_data(json_data)
+    playlists_data = json_data
     return [
         [
             playlist.get("name"), playlist.get("id"), playlist.get("description"),
@@ -622,7 +636,7 @@ def extract_featured_playlists_data(playlists_json):
 
     return message, playlists
 def get_featured_playlists_embeddings(playlists_json):
-    message, playlists_data = extract_featured_playlists_data(playlists_json)
+    message, playlists_data = playlists_json
     return [
         [
             playlist.get("name"), playlist.get("description"), playlist.get("external_url"), playlist.get("id"),
@@ -669,7 +683,7 @@ def extract_saved_shows_data(shows_json):
 
     return href, limit, next_url, previous_url, total, shows
 def get_saved_shows_embeddings(shows_json):
-    href, limit, next_url, previous_url, total, shows_data = extract_saved_shows_data(shows_json)
+    href, limit, next_url, previous_url, total, shows_data = shows_json
     return [
         [
             show.get("added_at"), show.get("show_id"), show.get("show_name"), show.get("show_description"),

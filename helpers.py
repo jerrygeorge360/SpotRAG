@@ -123,12 +123,5 @@ def login_user_process():
         db.session.rollback()
         return jsonify({'status':'error','message':'Internal Server error','error_code':'VALIDATION ERROR','data':None}), 500
 
-    user_data = {
-        "id": existing_user.id,
-        "username": existing_user.username,
-        "email": existing_user.email,
-        "profile_image_url": existing_user.profile_image_url,  # optional, if you have thi
-    }
-
     return jsonify({'status':'success','message':'user logged in','data':user_data}),201
 

@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, url_for, session, redirect, flash, jsonify, Flask
-from flask_login import logout_user,LoginManager
+from flask_login import logout_user,LoginManager,login_required
 from flask_migrate import Migrate
 from helpers import login_user_process
 from oauth import OauthFacade
@@ -73,6 +73,7 @@ def unauthorized():
 
 
 @app.route('/')
+@login_required
 def index():
     return render_template('index.html')
 
@@ -150,27 +151,6 @@ def callback_route():
 
 @app.route('/logout')
 def logout():
-    """
-    Logs the user out of the application, invalidates the GitHub OAuth token if it exists,
-    and clears the session.
-
-    This route performs the following actions:
-    - Logs the user out of the Flask app by calling `logout_user()`.
-    - If an OAuth token exists in the session, it attempts to invalidate the token
-      by sending a DELETE request to the GitHub OAuth application API.
-    - Clears any session data related to the OAuth token.
-    - Displays a success message via `flash` indicating that the user has been logged out.
-    - Redirects the user to the home page after logout.
-
-    Responses:
-        - 200: Successfully logged out and invalidated GitHub OAuth token.
-        - 400: Error occurred while invalidating the GitHub OAuth token.
-
-    Returns:
-        redirect: Redirects to the home page (`views.index`).
-    """
-
-
     logger.info('User initiated logout.')
 
     flash('You have been logged out successfully.', 'success')

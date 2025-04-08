@@ -3,7 +3,6 @@ from sentence_transformers import SentenceTransformer
 from chromadb.utils.embedding_functions import EmbeddingFunction
 import chromadb
 
-from datapipeline import collection_exists
 
 model = SentenceTransformer('paraphrase-albert-small-v2')
 
