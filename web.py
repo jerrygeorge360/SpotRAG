@@ -1,12 +1,15 @@
 from flask import Blueprint, render_template, request, url_for, session, redirect, flash, jsonify, Flask
 from flask_login import logout_user,LoginManager,login_required
 from flask_migrate import Migrate
+
+from datapipeline import process_user_data
 from helpers import login_user_process
 from oauth import OauthFacade
 from dotenv import load_dotenv
 from models import User,db
 import logging
 import os
+from flask_apscheduler import APScheduler
 
 load_dotenv()
 app = Flask(__name__)
@@ -23,7 +26,12 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-
+# initialize scheduler
+scheduler = APScheduler()
+# if you don't wanna use a config, you can set options here:
+# scheduler.api_enabled = True
+scheduler.init_app(app)
+scheduler.start()
 
 
 SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
@@ -161,5 +169,16 @@ def logout():
 
     return redirect('/')
 
+@scheduler.task('interval', id='dynamic_job', seconds=20)
+def job():
+    print("🧠 This runs every 20 seconds")
+
+scheduler.add_job(
+    id='spotify_user_pipeline',
+    func=process_user_data,
+    trigger='interval',
+    hours=12,
+    kwargs={'object': app}
+)
 if __name__  == '__main__':
     app.run(debug=True)

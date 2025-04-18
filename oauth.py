@@ -572,9 +572,10 @@ class SpotifyUserService(TwitchUserBase):
         conn.request("POST", "/api/token", body, headers)
         response = conn.getresponse()
         data = json.loads(response.read().decode("utf-8"))
-
+        print(data)
         if 'access_token' in data:
             self.access_token = data['access_token']
+
             self.headers['Authorization'] = f'Bearer {self.access_token}'
             return self.access_token
         else:
@@ -594,7 +595,7 @@ class SpotifyUserService(TwitchUserBase):
         return self._retry_request(endpoint)
 
     def get_followed_artists(self):
-        endpoint = '/v1/me/following'
+        endpoint = '/v1/me/following?type=artist'
         return self._retry_request(endpoint)
 
     # albums

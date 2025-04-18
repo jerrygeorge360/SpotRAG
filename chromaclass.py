@@ -78,6 +78,7 @@ class Chroma(ChromaObj):
 
     def add_to_collection(self, param: dict, name: str = None):
         collection = self._get_collection(name)
+        print(param.get('documents'))
         collection.add(
             documents=param.get('documents'),
             metadatas=param.get('metadatas'),
@@ -119,5 +120,5 @@ class Chroma(ChromaObj):
 
     def collection_exist(self,name:str):
         collection_list = self.client.list_collections()
-        collection_status = any(col.name == name for col in collection_list)
+        collection_status = any(col == name for col in collection_list)
         return collection_status

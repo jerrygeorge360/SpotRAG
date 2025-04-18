@@ -15,12 +15,27 @@ def extract_spotify_user_info(user_data):
         "explicit_content_filter_enabled": user_data.get("explicit_content", {}).get("filter_enabled"),
         "explicit_content_filter_locked": user_data.get("explicit_content", {}).get("filter_locked"),
     }
-def get_spotify_user_embeddings(user_data):
-    user_info = user_data
-    return [user_info.get("id"), user_info.get("display_name"), user_info.get("email"),
-            user_info.get("country"), user_info.get("profile_url"), user_info.get("product"),
-            user_info.get("followers"), user_info.get("profile_image"),
-            user_info.get("explicit_content_filter_enabled"), user_info.get("explicit_content_filter_locked")]
+def get_spotify_user_embeddings(user_info: dict) -> list[str]:
+    if not user_info:
+        return []
+
+    info_str = " - ".join([
+        f'ID:{user_info.get("id", "")}',
+        f'Display name:{user_info.get("display_name", "")}',
+        f'Email: {user_info.get("email", "")}',
+        f'Country: {user_info.get("country", "")}',
+        f'Product: {user_info.get("product", "")}',
+        f'Followers Count: {str(user_info.get("followers", ""))}',
+        f'Profile url: {user_info.get("profile_url", "")}',
+    ])
+    return [info_str]
+
+# def get_spotify_user_embeddings(user_data):
+#     user_info = user_data
+#     return [user_info.get("id"), user_info.get("display_name"), user_info.get("email"),
+#             user_info.get("country"), user_info.get("profile_url"), user_info.get("product"),
+#             user_info.get("followers"), user_info.get("profile_image"),
+#             user_info.get("explicit_content_filter_enabled"), user_info.get("explicit_content_filter_locked")]
 
 
 def extract_spotify_items(data):
@@ -38,15 +53,28 @@ def extract_spotify_items(data):
         extracted_items.append(extracted)
 
     return extracted_items
-def get_spotify_items_embeddings(data):
-    items_info = data
-    return [
-        [
-            item.get("name"), item.get("spotify_url"), item.get("image_url"), item.get("popularity"),
-            item.get("followers"), ", ".join(item.get("genres"))
+# def get_spotify_items_embeddings(data):
+#     items_info = data
+#     return [
+#         [
+#             item.get("name"), item.get("spotify_url"), item.get("image_url"), item.get("popularity"),
+#             item.get("followers"), ", ".join(item.get("genres"))
+#         ]
+#         for item in items_info
+#     ]
+def get_spotify_items_embeddings(items_info: list[dict]) -> list[str]:
+    formatted = []
+    for item in items_info:
+        parts = [
+            f"Item Name: {item.get('name', '')}",
+            f"Genres: {', '.join(item.get('genres', []))}",
+            f"Spotify URL: {item.get('spotify_url', '')}",
+            f"Popularity: {str(item.get('popularity', ''))}",
+            f"Followers: {str(item.get('followers', ''))}",
         ]
-        for item in items_info
-    ]
+        formatted.append(" - ".join(part for part in parts if part))
+    return formatted
+
 
 
 def extract_targeted_spotify_user_info(data):
@@ -60,12 +88,23 @@ def extract_targeted_spotify_user_info(data):
         "href": data.get("href"),
         "type": data.get("type")
     }
-def get_targeted_spotify_user_embeddings(data):
-    user_info = data
-    return [user_info.get("display_name"), user_info.get("spotify_url"),
-            user_info.get("followers"), user_info.get("profile_image"), user_info.get("id"),
-            user_info.get("uri"), user_info.get("href"), user_info.get("type")]
-
+# def get_targeted_spotify_user_embeddings(data):
+#     user_info = data
+#     return [user_info.get("display_name"), user_info.get("spotify_url"),
+#             user_info.get("followers"), user_info.get("profile_image"), user_info.get("id"),
+#             user_info.get("uri"), user_info.get("href"), user_info.get("type")]
+def get_targeted_spotify_user_embeddings(user_info: dict) -> list[str]:
+    parts = [
+        f"Display Name: {user_info.get('display_name', '')}",
+        f"Spotify URL: {user_info.get('spotify_url', '')}",
+        f"Followers: {str(user_info.get('followers', ''))}",
+        f"Profile Image: {user_info.get('profile_image', '')}",
+        f"User ID: {user_info.get('id', '')}",
+        f"User URI: {user_info.get('uri', '')}",
+        f"User Type: {user_info.get('type', '')}",
+        f"Link: {user_info.get('href', '')}",
+    ]
+    return [" - ".join(part for part in parts if part)]
 
 def extract_spotify_artists_info(data):
     artists = data.get("artists", {}).get("items", [])
@@ -86,16 +125,29 @@ def extract_spotify_artists_info(data):
         })
 
     return extracted
-def get_spotify_artists_embeddings(data):
-    artists_info = data
-    return [
-        [
-            artist.get("name"), artist.get("spotify_url"), artist.get("image"), artist.get("popularity"),
-            artist.get("followers"), ", ".join(artist.get("genres")), artist.get("id"), artist.get("uri"),
-            artist.get("type"), artist.get("href")
+# def get_spotify_artists_embeddings(data):
+#     artists_info = data
+#     return [
+#         [
+#             artist.get("name"), artist.get("spotify_url"), artist.get("image"), artist.get("popularity"),
+#             artist.get("followers"), ", ".join(artist.get("genres")), artist.get("id"), artist.get("uri"),
+#             artist.get("type"), artist.get("href")
+#         ]
+#         for artist in artists_info
+#     ]
+def get_spotify_artists_embeddings(artists_info: list[dict]) -> list[str]:
+    formatted = []
+    for artist in artists_info:
+        parts = [
+            f"Artist Name: {artist.get('name', '')}",
+            f"Genres: {', '.join(artist.get('genres', []))}",
+            f"Spotify URL: {artist.get('spotify_url', '')}",
+            f"Popularity: {str(artist.get('popularity', ''))}",
+            f"Followers: {str(artist.get('followers', ''))}",
+            f"Artist ID: {artist.get('id', '')}",
         ]
-        for artist in artists_info
-    ]
+        formatted.append(" - ".join(part for part in parts if part))
+    return formatted
 
 
 # albums
@@ -125,14 +177,13 @@ def get_album_embeddings(docs: list[dict]) -> list[str]:
     formatted = []
     for doc in docs:
         parts = [
-            doc.get("track_name", ""),
-            doc.get("artist_name", ""),
-            doc.get("album_name", ""),
-            doc.get("album_release_date", ""),
-            doc.get("track_url", ""),
-            doc.get("album_url", ""),
+            f"Track: {doc.get('track_name', '')}",
+            f"Artist: {doc.get('artist_name', '')}",
+            f"Album: {doc.get('album_name', '')}",
+            f"Release Date: {doc.get('album_release_date', '')}",
+            f"Track URL: {doc.get('track_url', '')}",
+            f"Album URL: {doc.get('album_url', '')}",
         ]
-        # Join parts into one string
         formatted.append(" - ".join(part for part in parts if part))
     return formatted
 
@@ -149,7 +200,6 @@ def extract_new_releases(data):
             "total_tracks": album.get("total_tracks"),
             "release_date": album.get("release_date"),
             "release_precision": album.get("release_date_precision"),
-            "available_markets": album.get("available_markets", []),
             "spotify_url": album.get("external_urls", {}).get("spotify"),
             "image": album.get("images", [{}])[0].get("url") if album.get("images") else None,
             "id": album.get("id"),
@@ -179,18 +229,19 @@ def extract_new_releases(data):
         },
         "albums": albums
     }
-def get_new_releases_embeddings(data):
-    new_releases_info = data
-    return [
-        [
-            album.get("name"), album.get("album_type"), album.get("total_tracks"), album.get("release_date"),
-            album.get("release_precision"), ", ".join(album.get("available_markets")), album.get("spotify_url"),
-            album.get("image"), album.get("id"), album.get("uri"), album.get("type"), album.get("restrictions"),
-            ", ".join([artist.get("name") for artist in album.get("artists")])
-        ]
-        for album in new_releases_info.get("albums", [])
-    ]
 
+def get_new_releases_embeddings(data: dict) -> list[str]:
+    formatted = []
+    for album in data.get("albums", []):
+        parts = [
+            f"Album: {album.get('name', '')}",
+            f"Artists: {', '.join(artist.get('name', '') for artist in album.get('artists', []))}",
+            f"Release Date: {album.get('release_date', '')}",
+            f"Album Type: {album.get('album_type', '')}",
+            f"Spotify URL: {album.get('spotify_url', '')}"
+        ]
+        formatted.append(" - ".join(part for part in parts if part))
+    return formatted
 
 def extract_user_audiobooks_list(data):
     audiobooks = []
@@ -235,19 +286,35 @@ def extract_user_audiobooks_list(data):
         },
         "audiobooks": audiobooks
     }
-def get_user_audiobooks_embeddings(data):
-    audiobooks_info = data
-    return [
-        [
-            audiobook.get("id"), audiobook.get("name"), audiobook.get("description"),
-            audiobook.get("explicit"), audiobook.get("publisher"), audiobook.get("media_type"),
-            audiobook.get("uri"), audiobook.get("type"), audiobook.get("total_chapters"),
-            audiobook.get("spotify_url"), ", ".join(audiobook.get("languages")), audiobook.get("image"),
-            ", ".join(audiobook.get("authors")), ", ".join(audiobook.get("narrators"))
+# def get_user_audiobooks_embeddings(data):
+#     audiobooks_info = data
+#     return [
+#         [
+#             audiobook.get("id"), audiobook.get("name"), audiobook.get("description"),
+#             audiobook.get("explicit"), audiobook.get("publisher"), audiobook.get("media_type"),
+#             audiobook.get("uri"), audiobook.get("type"), audiobook.get("total_chapters"),
+#             audiobook.get("spotify_url"), ", ".join(audiobook.get("languages")), audiobook.get("image"),
+#             ", ".join(audiobook.get("authors")), ", ".join(audiobook.get("narrators"))
+#         ]
+#         for audiobook in audiobooks_info.get("audiobooks", [])
+#     ]
+def get_user_audiobooks_embeddings(data) -> list[str]:
+    formatted = []
+    for audiobook in data.get("audiobooks", []):
+        parts = [
+            f"Title: {audiobook.get('name', '')}",
+            f"Publisher: {audiobook.get('publisher', '')}",
+            f"Description: {audiobook.get('description', '')}",
+            f"Explicit: {'Yes' if audiobook.get('explicit') else 'No'}",
+            f"Media Type: {audiobook.get('media_type', '')}",
+            f"Total Chapters: {audiobook.get('total_chapters', '')}",
+            f"Languages: {', '.join(audiobook.get('languages', []))}",
+            f"Authors: {', '.join(audiobook.get('authors', []))}",
+            f"Narrators: {', '.join(audiobook.get('narrators', []))}",
+            f"URL: {audiobook.get('spotify_url', '')}",
         ]
-        for audiobook in audiobooks_info.get("audiobooks", [])
-    ]
-
+        formatted.append(" - ".join(part for part in parts if part))
+    return formatted
 
 
 def extract_saved_episode_details(data):
@@ -296,23 +363,38 @@ def extract_saved_episode_details(data):
         },
         "episodes": episodes
     }
-def get_saved_episode_embeddings(data):
-    episodes_info = data
-    return [
-        [
-            episode.get("added_at"), episode.get("episode", {}).get("id"),
-            episode.get("episode", {}).get("name"), episode.get("episode", {}).get("description"),
-            episode.get("episode", {}).get("audio_preview_url"), episode.get("episode", {}).get("duration_ms"),
-            episode.get("episode", {}).get("explicit"), episode.get("episode", {}).get("external_url"),
-            episode.get("episode", {}).get("release_date"), episode.get("episode", {}).get("release_date_precision"),
-            episode.get("episode", {}).get("image"), episode.get("episode", {}).get("is_playable"),
-            episode.get("episode", {}).get("is_externally_hosted")
-        ]
-        for episode in episodes_info.get("episodes", [])
-    ]
 
+# def get_saved_episode_embeddings(data):
+#     episodes_info = data
+#     return [
+#         [
+#             episode.get("added_at"), episode.get("episode", {}).get("id"),
+#             episode.get("episode", {}).get("name"), episode.get("episode", {}).get("description"),
+#             episode.get("episode", {}).get("audio_preview_url"), episode.get("episode", {}).get("duration_ms"),
+#             episode.get("episode", {}).get("explicit"), episode.get("episode", {}).get("external_url"),
+#             episode.get("episode", {}).get("release_date"), episode.get("episode", {}).get("release_date_precision"),
+#             episode.get("episode", {}).get("image"), episode.get("episode", {}).get("is_playable"),
+#             episode.get("episode", {}).get("is_externally_hosted")
+#         ]
+#         for episode in episodes_info.get("episodes", [])
+#     ]
 
 # player
+def get_saved_episode_embeddings(data) -> list[str]:
+    formatted = []
+    for episode in data.get("episodes", []):
+        ep_info = episode.get("episode", {})
+        show_info = ep_info.get("show", {})
+        parts = [
+            f"Episode: {ep_info.get('name', '')}",
+            f"Description: {ep_info.get('description', '')}",
+            f"Release Date: {ep_info.get('release_date', '')}",
+            f"URL: {ep_info.get('external_url', '')}",
+            f"Show: {show_info.get('name', '')}",
+        ]
+        formatted.append(" - ".join(part for part in parts if part))
+    return formatted
+
 def extract_spotify_playback_status(data):
     device = data.get("device", {})
     item = data.get("item", {})
@@ -377,27 +459,39 @@ def extract_spotify_playback_status(data):
     }
 
     return playback_status
-def get_spotify_playback_status_embeddings(data):
-    playback_status_info = data
-
-    return [
-        str(playback_status_info.get("device", {}).get("id", "")),
-        str(playback_status_info.get("device", {}).get("name", "")),
-        str(playback_status_info.get("device", {}).get("type", "")),
-        str(playback_status_info.get("device", {}).get("volume_percent", "")),
-        str(playback_status_info.get("repeat_state", "")),
-        str(playback_status_info.get("shuffle_state", "")),
-        str(playback_status_info.get("context", {}).get("type", "")),
-        str(playback_status_info.get("context", {}).get("href", "")),
-        str(playback_status_info.get("context", {}).get("external_urls", "")),
-        str(playback_status_info.get("timestamp", "")),
-        str(playback_status_info.get("progress_ms", "")),
-        str(playback_status_info.get("is_playing", "")),
-        str(playback_status_info.get("currently_playing_type", "")),
-        str(playback_status_info.get("item", {}).get("name", "")),
-        str(playback_status_info.get("item", {}).get("external_urls", "")),  # fix key name
-        str(playback_status_info.get("item", {}).get("id", ""))
-    ]
+# def get_spotify_playback_status_embeddings(data):
+#     playback_status_info = data
+#
+#     return [
+#         str(playback_status_info.get("device", {}).get("id", "")),
+#         str(playback_status_info.get("device", {}).get("name", "")),
+#         str(playback_status_info.get("device", {}).get("type", "")),
+#         str(playback_status_info.get("device", {}).get("volume_percent", "")),
+#         str(playback_status_info.get("repeat_state", "")),
+#         str(playback_status_info.get("shuffle_state", "")),
+#         str(playback_status_info.get("context", {}).get("type", "")),
+#         str(playback_status_info.get("context", {}).get("href", "")),
+#         str(playback_status_info.get("context", {}).get("external_urls", "")),
+#         str(playback_status_info.get("timestamp", "")),
+#         str(playback_status_info.get("progress_ms", "")),
+#         str(playback_status_info.get("is_playing", "")),
+#         str(playback_status_info.get("currently_playing_type", "")),
+#         str(playback_status_info.get("item", {}).get("name", "")),
+#         str(playback_status_info.get("item", {}).get("external_urls", "")),  # fix key name
+#         str(playback_status_info.get("item", {}).get("id", ""))
+#     ]
+def get_spotify_playback_status_embeddings(docs: list[dict]) -> list[str]:
+    formatted = []
+    for doc in docs:
+        parts = [
+            f"Status: {'Playing' if doc.get('is_playing') else 'Paused'}",
+            f"Track: {doc.get('track_name', '')}",
+            f"Artist: {doc.get('artist_name', '')}",
+            f"Album: {doc.get('album_name', '')}",
+            f"Context: {doc.get('context_type', '')}",  # playlist, album, etc.
+        ]
+        formatted.append(" - ".join(part for part in parts if part))
+    return formatted
 
 
 def extract_device_info(devices):
@@ -417,25 +511,36 @@ def extract_device_info(devices):
             }
             device_info.append(device_data)
     return device_info
-def get_device_info_embeddings(devices):
-    if not isinstance(devices, list):
-        print("Expected a list of devices but got:", type(devices))
-        return []
-
-
-    return [
-        [
-            f"id:{device.get('id', '')}",
-            f"name:{device.get('name', '')}",
-            f"type:{device.get('type', '')}",
-            f"volume_percent:{device.get('volume_percent', '')}",
-            f"supports_volume:{device.get('supports_volume', '')}",
-            f"is_active:{device.get('is_active', '')}",
-            f"is_private_session:{device.get('is_private_session', '')}",
-            f"is_restricted:{device.get('is_restricted', '')}"
+# def get_device_info_embeddings(devices):
+#     if not isinstance(devices, list):
+#         print("Expected a list of devices but got:", type(devices))
+#         return []
+#
+#
+#     return [
+#         [
+#             f"id:{device.get('id', '')}",
+#             f"name:{device.get('name', '')}",
+#             f"type:{device.get('type', '')}",
+#             f"volume_percent:{device.get('volume_percent', '')}",
+#             f"supports_volume:{device.get('supports_volume', '')}",
+#             f"is_active:{device.get('is_active', '')}",
+#             f"is_private_session:{device.get('is_private_session', '')}",
+#             f"is_restricted:{device.get('is_restricted', '')}"
+#         ]
+#         for device in devices
+#     ]
+def get_device_info_embeddings(docs: list[dict]) -> list[str]:
+    formatted = []
+    for doc in docs:
+        parts = [
+            f"Device Name: {doc.get('device_name', '')}",
+            f"Device Type: {doc.get('device_type', '')}",
+            f"Status: {'Active' if doc.get('is_active') else 'Inactive'}",
+            f"Volume: {doc.get('volume_percent', '')}%",
         ]
-        for device in devices
-    ]
+        formatted.append(" - ".join(part for part in parts if part))
+    return formatted
 
 
 def extract_recently_played_spotify_tracks(data):
@@ -465,16 +570,28 @@ def extract_recently_played_spotify_tracks(data):
         processed_data.append(track_data)
 
     return processed_data
-def get_recently_played_spotify_tracks_embeddings(data):
-    recently_played_info = data
-    return [
-        [
-            track.get("track_name"), track.get("track_id"), track.get("album_name"), track.get("album_id"),
-            track.get("album_type"), track.get("release_date"), track.get("album_image_url"),
-            ", ".join([a.get("name", "") for a in track.get("artists", [])])
+# def get_recently_played_spotify_tracks_embeddings(data):
+#     recently_played_info = data
+#     return [
+#         [
+#             track.get("track_name"), track.get("track_id"), track.get("album_name"), track.get("album_id"),
+#             track.get("album_type"), track.get("release_date"), track.get("album_image_url"),
+#             ", ".join([a.get("name", "") for a in track.get("artists", [])])
+#         ]
+#         for track in recently_played_info
+#     ]
+def get_recently_played_spotify_tracks_embeddings(docs: list[dict]) -> list[str]:
+    formatted = []
+    for doc in docs:
+        parts = [
+            f"Track Name: {doc.get('track_name', '')}",
+            f"Artist: {doc.get('artist_name', '')}",
+            f"Album: {doc.get('album_name', '')}",
+            f"Release Date: {doc.get('release_date', '')}",
+            f"Track URL: {doc.get('track_url', '')}",
         ]
-        for track in recently_played_info
-    ]
+        formatted.append(" - ".join(part for part in parts if part))
+    return formatted
 
 
 
@@ -599,16 +716,28 @@ def extract_user_playlists_data(json_data):
 
     # Return the extracted list of shows
     return shows
-def get_user_playlists_embeddings(json_data):
-    playlists_data = json_data
-    return [
-        [
-            playlist.get("name"), playlist.get("id"), playlist.get("description"),
-            playlist.get("external_url"), playlist.get("image_url"), playlist.get("owner_name"),
-            playlist.get("owner_url"), playlist.get("tracks_total"), playlist.get("public"), playlist.get("uri")
+# def get_user_playlists_embeddings(json_data):
+#     playlists_data = json_data
+#     return [
+#         [
+#             playlist.get("name"), playlist.get("id"), playlist.get("description"),
+#             playlist.get("external_url"), playlist.get("image_url"), playlist.get("owner_name"),
+#             playlist.get("owner_url"), playlist.get("tracks_total"), playlist.get("public"), playlist.get("uri")
+#         ]
+#         for playlist in playlists_data
+#     ]
+def get_user_playlists_embeddings(docs: list[dict]) -> list[str]:
+    formatted = []
+    for doc in docs:
+        parts = [
+            f"Playlist Name: {doc.get('playlist_name', '')}",
+            f"Owner: {doc.get('owner', '')}",
+            f"Track Count: {doc.get('track_count', '')}",
+            f"Description: {doc.get('description', '')}",
         ]
-        for playlist in playlists_data
-    ]
+        formatted.append(" - ".join(part for part in parts if part))
+    return formatted
+
 
 
 def extract_featured_playlists_data(playlists_json):
@@ -637,27 +766,31 @@ def extract_featured_playlists_data(playlists_json):
     return message, playlists
 def get_featured_playlists_embeddings(playlists_json):
     message, playlists_data = playlists_json
-    return [
-        [
-            playlist.get("name"), playlist.get("description"), playlist.get("external_url"), playlist.get("id"),
-            playlist.get("image_url"), playlist.get("image_height"), playlist.get("image_width"),
-            playlist.get("owner_name"), playlist.get("owner_external_url"), playlist.get("is_public"),
-            playlist.get("tracks_total"), playlist.get("uri")
-        ]
-        for playlist in playlists_data
-    ]
+
+    embeddings = []
+    for playlist in playlists_data:
+        embedding = " - ".join([
+            f"Name: {playlist.get('name', '')}",
+            f"Description: {playlist.get('description', '')}",
+            f"URL: {playlist.get('external_url', '')}",
+            f"ID: {playlist.get('id', '')}",
+            f"Image URL: {playlist.get('image_url', '')}",
+            f"Image Height: {playlist.get('image_height', '')}",
+            f"Image Width: {playlist.get('image_width', '')}",
+            f"Owner Name: {playlist.get('owner_name', '')}",
+            f"Owner URL: {playlist.get('owner_external_url', '')}",
+            f"Public: {playlist.get('is_public', '')}",
+            f"Track Count: {playlist.get('tracks_total', '')}",
+            f"URI: {playlist.get('uri', '')}"
+        ])
+        embeddings.append(embedding)
+
+    return embeddings
+
 
 
 def extract_saved_shows_data(shows_json):
-    # Extract the 'href', 'limit', 'next', 'previous', and 'total' information
-    href = shows_json.get('href', 'N/A')
-    limit = shows_json.get('limit', 0)
-    next_url = shows_json.get('next', 'N/A')
-    previous_url = shows_json.get('previous', 'N/A')
-    total = shows_json.get('total', 0)
-
     shows = []
-
     # Extract details for each show from the 'items' list
     for item in shows_json.get('items', []):
         show_data = {
@@ -681,17 +814,14 @@ def extract_saved_shows_data(shows_json):
         }
         shows.append(show_data)
 
-    return href, limit, next_url, previous_url, total, shows
-def get_saved_shows_embeddings(shows_json):
-    href, limit, next_url, previous_url, total, shows_data = shows_json
-    return [
-        [
-            show.get("added_at"), show.get("show_id"), show.get("show_name"), show.get("show_description"),
-            show.get("show_html_description"), show.get("show_external_url"), show.get("show_image_url"),
-            show.get("show_image_height"), show.get("show_image_width"), show.get("show_total_episodes"),
-            show.get("show_is_externally_hosted"), ", ".join(show.get("show_available_markets", [])),
-            ", ".join(show.get("show_languages", [])), show.get("show_media_type"), show.get("show_publisher"),
-            show.get("show_type"), show.get("show_uri")
+    return shows
+def get_saved_shows_embeddings(docs: list[dict]) -> list[str]:
+    formatted = []
+    for doc in docs:
+        parts = [
+            f'Show name:{doc.get("show_name", "")}',
+            f'Show publisher: {doc.get("show_publisher", "")}',
+            f'Show description: {doc.get("show_description", "")}',
         ]
-        for show in shows_data
-    ]
+        formatted.append(" - ".join(part for part in parts if part))
+    return formatted
