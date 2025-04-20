@@ -59,6 +59,14 @@ I  would use client credentials and authorization code flow
 client credentials flow:is for accessing public data
 authorization code flow: is for accessing private data 
 
+## workflow update
+
+```
+User Prompt → Intent Classifier → Narrowed Collection(s) → User Prompt → Vector Search → Retrieve Top Docs → LLM Prompt → Generate Response (Naive RAG)
+```
+```
+User Prompt → LLM → Hallucinated Response + User Prompt → Intent Classifier → Narrowed Collection(s) → Hallucinated Response + User Prompt → Vector Search → Retrieve Top Docs → LLM Prompt → Generate Response (Advanced RAG)
+```
 
 
 

@@ -106,8 +106,9 @@ class Chroma(ChromaObj):
     def query_collection(self, param: dict, name: str = None):
         collection = self._get_collection(name)
         return collection.query(
+            include=["documents", "metadatas", "distances"],
             query_texts=param.get('query'),
-            n_results=param.get('n_results', 5)
+            n_results=param.get('n_results', 1)
         )
 
     def peek(self,name: str = None):
@@ -120,5 +121,6 @@ class Chroma(ChromaObj):
 
     def collection_exist(self,name:str):
         collection_list = self.client.list_collections()
+        print(collection_list)
         collection_status = any(col == name for col in collection_list)
         return collection_status

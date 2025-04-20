@@ -19,16 +19,18 @@ def get_spotify_user_embeddings(user_info: dict) -> list[str]:
     if not user_info:
         return []
 
-    info_str = " - ".join([
-        f'ID:{user_info.get("id", "")}',
-        f'Display name:{user_info.get("display_name", "")}',
-        f'Email: {user_info.get("email", "")}',
-        f'Country: {user_info.get("country", "")}',
-        f'Product: {user_info.get("product", "")}',
-        f'Followers Count: {str(user_info.get("followers", ""))}',
-        f'Profile url: {user_info.get("profile_url", "")}',
-    ])
-    return [info_str]
+    sentences = [
+        f"The user's ID is {user_info.get('id', '')}.",
+        f"Their display name is {user_info.get('display_name', '')}.",
+        f"They can be contacted via {user_info.get('email', '')}.",
+        f"They are from {user_info.get('country', '')}.",
+        f"They have a {user_info.get('product', '')} Spotify account.",
+        f"They currently have {user_info.get('followers', 0)} followers.",
+        f"Their Spotify profile is at {user_info.get('profile_url', '')}."
+    ]
+
+    info_str = sentences
+    return info_str
 
 # def get_spotify_user_embeddings(user_data):
 #     user_info = user_data
@@ -64,17 +66,25 @@ def extract_spotify_items(data):
 #     ]
 def get_spotify_items_embeddings(items_info: list[dict]) -> list[str]:
     formatted = []
-    for item in items_info:
-        parts = [
-            f"Item Name: {item.get('name', '')}",
-            f"Genres: {', '.join(item.get('genres', []))}",
-            f"Spotify URL: {item.get('spotify_url', '')}",
-            f"Popularity: {str(item.get('popularity', ''))}",
-            f"Followers: {str(item.get('followers', ''))}",
-        ]
-        formatted.append(" - ".join(part for part in parts if part))
-    return formatted
+    for i, item in enumerate(items_info):
+        name = item.get('name', '')
+        genres = ", ".join(item.get('genres', []))
+        spotify_url = item.get('spotify_url', '')
+        popularity = item.get('popularity', '')
+        followers = item.get('followers', '')
 
+        if name:
+            formatted.append(f"Item {i + 1} is named '{name}'.")
+        if genres:
+            formatted.append(f"It belongs to the following genres: {genres}.")
+        if spotify_url:
+            formatted.append(f"You can check it out on Spotify here: {spotify_url}.")
+        if popularity != '':
+            formatted.append(f"It has a popularity score of {popularity}.")
+        if followers != '':
+            formatted.append(f"It currently has {followers} followers.")
+
+    return formatted
 
 
 def extract_targeted_spotify_user_info(data):
@@ -94,17 +104,30 @@ def extract_targeted_spotify_user_info(data):
 #             user_info.get("followers"), user_info.get("profile_image"), user_info.get("id"),
 #             user_info.get("uri"), user_info.get("href"), user_info.get("type")]
 def get_targeted_spotify_user_embeddings(user_info: dict) -> list[str]:
-    parts = [
-        f"Display Name: {user_info.get('display_name', '')}",
-        f"Spotify URL: {user_info.get('spotify_url', '')}",
-        f"Followers: {str(user_info.get('followers', ''))}",
-        f"Profile Image: {user_info.get('profile_image', '')}",
-        f"User ID: {user_info.get('id', '')}",
-        f"User URI: {user_info.get('uri', '')}",
-        f"User Type: {user_info.get('type', '')}",
-        f"Link: {user_info.get('href', '')}",
-    ]
-    return [" - ".join(part for part in parts if part)]
+    if not user_info:
+        return []
+
+    formatted = []
+
+    if user_info.get('display_name'):
+        formatted.append(f"The user's display name is {user_info['display_name']}.")
+    if user_info.get('spotify_url'):
+        formatted.append(f"Their Spotify profile can be found at {user_info['spotify_url']}.")
+    if user_info.get('followers') is not None:
+        formatted.append(f"They have {user_info['followers']} followers.")
+    if user_info.get('profile_image'):
+        formatted.append(f"Their profile image is located at {user_info['profile_image']}.")
+    if user_info.get('id'):
+        formatted.append(f"Their unique Spotify user ID is {user_info['id']}.")
+    if user_info.get('uri'):
+        formatted.append(f"Their Spotify URI is {user_info['uri']}.")
+    if user_info.get('type'):
+        formatted.append(f"The user type is {user_info['type']}.")
+    if user_info.get('href'):
+        formatted.append(f"The API href link for this user is {user_info['href']}.")
+
+    return formatted
+
 
 def extract_spotify_artists_info(data):
     artists = data.get("artists", {}).get("items", [])
@@ -137,16 +160,21 @@ def extract_spotify_artists_info(data):
 #     ]
 def get_spotify_artists_embeddings(artists_info: list[dict]) -> list[str]:
     formatted = []
+
     for artist in artists_info:
-        parts = [
-            f"Artist Name: {artist.get('name', '')}",
-            f"Genres: {', '.join(artist.get('genres', []))}",
-            f"Spotify URL: {artist.get('spotify_url', '')}",
-            f"Popularity: {str(artist.get('popularity', ''))}",
-            f"Followers: {str(artist.get('followers', ''))}",
-            f"Artist ID: {artist.get('id', '')}",
-        ]
-        formatted.append(" - ".join(part for part in parts if part))
+        if artist.get('name'):
+            formatted.append(f"The artist's name is {artist['name']}.")
+        if artist.get('genres'):
+            formatted.append(f"Their genres include {', '.join(artist['genres'])}.")
+        if artist.get('spotify_url'):
+            formatted.append(f"Their Spotify profile is available at {artist['spotify_url']}.")
+        if artist.get('popularity') is not None:
+            formatted.append(f"They have a popularity score of {artist['popularity']}.")
+        if artist.get('followers') is not None:
+            formatted.append(f"They have {artist['followers']} followers.")
+        if artist.get('id'):
+            formatted.append(f"Their Spotify artist ID is {artist['id']}.")
+
     return formatted
 
 
@@ -175,16 +203,21 @@ def extract_album_info(data):
     return flattened
 def get_album_embeddings(docs: list[dict]) -> list[str]:
     formatted = []
+
     for doc in docs:
-        parts = [
-            f"Track: {doc.get('track_name', '')}",
-            f"Artist: {doc.get('artist_name', '')}",
-            f"Album: {doc.get('album_name', '')}",
-            f"Release Date: {doc.get('album_release_date', '')}",
-            f"Track URL: {doc.get('track_url', '')}",
-            f"Album URL: {doc.get('album_url', '')}",
-        ]
-        formatted.append(" - ".join(part for part in parts if part))
+        if doc.get('track_name'):
+            formatted.append(f"The track title is {doc['track_name']}.")
+        if doc.get('artist_name'):
+            formatted.append(f"The track is by {doc['artist_name']}.")
+        if doc.get('album_name'):
+            formatted.append(f"The track is part of the album titled {doc['album_name']}.")
+        if doc.get('album_release_date'):
+            formatted.append(f"The album was released on {doc['album_release_date']}.")
+        if doc.get('track_url'):
+            formatted.append(f"You can listen to the track at {doc['track_url']}.")
+        if doc.get('album_url'):
+            formatted.append(f"The album is available at {doc['album_url']}.")
+
     return formatted
 
 
@@ -230,18 +263,29 @@ def extract_new_releases(data):
         "albums": albums
     }
 
+
 def get_new_releases_embeddings(data: dict) -> list[str]:
     formatted = []
-    for album in data.get("albums", []):
-        parts = [
-            f"Album: {album.get('name', '')}",
-            f"Artists: {', '.join(artist.get('name', '') for artist in album.get('artists', []))}",
-            f"Release Date: {album.get('release_date', '')}",
-            f"Album Type: {album.get('album_type', '')}",
-            f"Spotify URL: {album.get('spotify_url', '')}"
-        ]
-        formatted.append(" - ".join(part for part in parts if part))
+    for i, album in enumerate(data.get("albums", [])):
+        album_name = album.get("name", "")
+        artist_names = ", ".join(artist.get("name", "") for artist in album.get("artists", []))
+        release_date = album.get("release_date", "")
+        album_type = album.get("album_type", "")
+        spotify_url = album.get("spotify_url", "")
+
+        if album_name:
+            formatted.append(f"Album {i + 1} is titled '{album_name}'.")
+        if artist_names:
+            formatted.append(f"It is by the artist(s): {artist_names}.")
+        if release_date:
+            formatted.append(f"It was released on {release_date}.")
+        if album_type:
+            formatted.append(f"It is categorized as a {album_type} album.")
+        if spotify_url:
+            formatted.append(f"You can listen to it here: {spotify_url}.")
+
     return formatted
+
 
 def extract_user_audiobooks_list(data):
     audiobooks = []
@@ -300,20 +344,28 @@ def extract_user_audiobooks_list(data):
 #     ]
 def get_user_audiobooks_embeddings(data) -> list[str]:
     formatted = []
+
     for audiobook in data.get("audiobooks", []):
-        parts = [
-            f"Title: {audiobook.get('name', '')}",
-            f"Publisher: {audiobook.get('publisher', '')}",
-            f"Description: {audiobook.get('description', '')}",
-            f"Explicit: {'Yes' if audiobook.get('explicit') else 'No'}",
-            f"Media Type: {audiobook.get('media_type', '')}",
-            f"Total Chapters: {audiobook.get('total_chapters', '')}",
-            f"Languages: {', '.join(audiobook.get('languages', []))}",
-            f"Authors: {', '.join(audiobook.get('authors', []))}",
-            f"Narrators: {', '.join(audiobook.get('narrators', []))}",
-            f"URL: {audiobook.get('spotify_url', '')}",
-        ]
-        formatted.append(" - ".join(part for part in parts if part))
+        if audiobook.get('name'):
+            formatted.append(f"The title of the audiobook is {audiobook['name']}.")
+        if audiobook.get('publisher'):
+            formatted.append(f"It was published by {audiobook['publisher']}.")
+        if audiobook.get('description'):
+            formatted.append(f"Description: {audiobook['description']}")
+        formatted.append(f"This audiobook contains explicit content." if audiobook.get('explicit') else "This audiobook does not contain explicit content.")
+        if audiobook.get('media_type'):
+            formatted.append(f"The media type is {audiobook['media_type']}.")
+        if audiobook.get('total_chapters'):
+            formatted.append(f"It has {audiobook['total_chapters']} chapters.")
+        if audiobook.get('languages'):
+            formatted.append(f"Available languages: {', '.join(audiobook['languages'])}.")
+        if audiobook.get('authors'):
+            formatted.append(f"The authors are: {', '.join(audiobook['authors'])}.")
+        if audiobook.get('narrators'):
+            formatted.append(f"Narrated by: {', '.join(audiobook['narrators'])}.")
+        if audiobook.get('spotify_url'):
+            formatted.append(f"You can find it on Spotify at {audiobook['spotify_url']}.")
+
     return formatted
 
 
@@ -382,17 +434,22 @@ def extract_saved_episode_details(data):
 # player
 def get_saved_episode_embeddings(data) -> list[str]:
     formatted = []
+
     for episode in data.get("episodes", []):
         ep_info = episode.get("episode", {})
         show_info = ep_info.get("show", {})
-        parts = [
-            f"Episode: {ep_info.get('name', '')}",
-            f"Description: {ep_info.get('description', '')}",
-            f"Release Date: {ep_info.get('release_date', '')}",
-            f"URL: {ep_info.get('external_url', '')}",
-            f"Show: {show_info.get('name', '')}",
-        ]
-        formatted.append(" - ".join(part for part in parts if part))
+
+        if ep_info.get('name'):
+            formatted.append(f"The episode is titled '{ep_info['name']}'.")
+        if ep_info.get('description'):
+            formatted.append(f"Description: {ep_info['description']}")
+        if ep_info.get('release_date'):
+            formatted.append(f"It was released on {ep_info['release_date']}.")
+        if show_info.get('name'):
+            formatted.append(f"This episode is part of the show '{show_info['name']}'.")
+        if ep_info.get('external_url'):
+            formatted.append(f"Listen to it here: {ep_info['external_url']}.")
+
     return formatted
 
 def extract_spotify_playback_status(data):
@@ -483,14 +540,17 @@ def extract_spotify_playback_status(data):
 def get_spotify_playback_status_embeddings(docs: list[dict]) -> list[str]:
     formatted = []
     for doc in docs:
-        parts = [
-            f"Status: {'Playing' if doc.get('is_playing') else 'Paused'}",
-            f"Track: {doc.get('track_name', '')}",
-            f"Artist: {doc.get('artist_name', '')}",
-            f"Album: {doc.get('album_name', '')}",
-            f"Context: {doc.get('context_type', '')}",  # playlist, album, etc.
-        ]
-        formatted.append(" - ".join(part for part in parts if part))
+        status = "currently playing" if doc.get('is_playing') else "paused"
+        if status:
+            formatted.append(f"The user is {status} music.")
+        if doc.get('track_name'):
+            formatted.append(f"The current track is '{doc['track_name']}'.")
+        if doc.get('artist_name'):
+            formatted.append(f"The artist performing is {doc['artist_name']}.")
+        if doc.get('album_name'):
+            formatted.append(f"This track is part of the album '{doc['album_name']}'.")
+        if doc.get('context_type'):
+            formatted.append(f"The playback is happening in the context of a {doc['context_type']}.")
     return formatted
 
 
@@ -533,13 +593,15 @@ def extract_device_info(devices):
 def get_device_info_embeddings(docs: list[dict]) -> list[str]:
     formatted = []
     for doc in docs:
-        parts = [
-            f"Device Name: {doc.get('device_name', '')}",
-            f"Device Type: {doc.get('device_type', '')}",
-            f"Status: {'Active' if doc.get('is_active') else 'Inactive'}",
-            f"Volume: {doc.get('volume_percent', '')}%",
-        ]
-        formatted.append(" - ".join(part for part in parts if part))
+        if doc.get('device_name'):
+            formatted.append(f"The device name is {doc['device_name']}.")
+        if doc.get('device_type'):
+            formatted.append(f"It is a {doc['device_type']} device.")
+        if 'is_active' in doc:
+            status = "active" if doc['is_active'] else "inactive"
+            formatted.append(f"The device is currently {status}.")
+        if 'volume_percent' in doc:
+            formatted.append(f"The current volume is set to {doc['volume_percent']} percent.")
     return formatted
 
 
@@ -583,14 +645,16 @@ def extract_recently_played_spotify_tracks(data):
 def get_recently_played_spotify_tracks_embeddings(docs: list[dict]) -> list[str]:
     formatted = []
     for doc in docs:
-        parts = [
-            f"Track Name: {doc.get('track_name', '')}",
-            f"Artist: {doc.get('artist_name', '')}",
-            f"Album: {doc.get('album_name', '')}",
-            f"Release Date: {doc.get('release_date', '')}",
-            f"Track URL: {doc.get('track_url', '')}",
-        ]
-        formatted.append(" - ".join(part for part in parts if part))
+        if doc.get('track_name'):
+            formatted.append(f"The user recently listened to '{doc['track_name']}'.")
+        if doc.get('artist_name'):
+            formatted.append(f"The track was performed by {doc['artist_name']}.")
+        if doc.get('album_name'):
+            formatted.append(f"It is part of the album titled '{doc['album_name']}'.")
+        if doc.get('release_date'):
+            formatted.append(f"The album was released on {doc['release_date']}.")
+        if doc.get('track_url'):
+            formatted.append(f"You can listen to the track at {doc['track_url']}.")
     return formatted
 
 
@@ -645,48 +709,121 @@ def extract_currently_playing_and_queue(data):
 
     track_data["queue"] = queue_data
     return track_data
+
 def get_currently_playing_and_queue_embeddings(data):
     if not data:
         return []
 
     # Format for currently playing track
     currently_playing = data.get("currently_playing", {})
-    currently_playing_info = [
-        f"track_name:{currently_playing.get('track_name', '')}",
-        f"track_id:{currently_playing.get('track_id', '')}",
-        f"album_name:{currently_playing.get('album_name', '')}",
-        f"album_id:{currently_playing.get('album_id', '')}",
-        f"album_type:{currently_playing.get('album_type', '')}",
-        f"release_date:{currently_playing.get('release_date', '')}",
-        f"album_image_url:{currently_playing.get('album_image_url', '')}",
-        f"artists:{', '.join([artist.get('name', '') for artist in currently_playing.get('artists', [])])}",
-        f"is_playable:{currently_playing.get('is_playable', '')}",
-        f"duration_ms:{currently_playing.get('duration_ms', '')}",
-        f"explicit:{currently_playing.get('explicit', '')}",
-        f"external_urls:{currently_playing.get('external_urls', '')}",
-    ]
+    currently_playing_info = []
+
+    track_name = currently_playing.get('track_name', '')
+    if track_name:
+        currently_playing_info.append(f"Currently playing track: {track_name}.")
+
+    track_id = currently_playing.get('track_id', '')
+    if track_id:
+        currently_playing_info.append(f"The track ID is {track_id}.")
+
+    album_name = currently_playing.get('album_name', '')
+    if album_name:
+        currently_playing_info.append(f"The album is titled '{album_name}'.")
+
+    album_id = currently_playing.get('album_id', '')
+    if album_id:
+        currently_playing_info.append(f"The album ID is {album_id}.")
+
+    album_type = currently_playing.get('album_type', '')
+    if album_type:
+        currently_playing_info.append(f"The album type is {album_type}.")
+
+    release_date = currently_playing.get('release_date', '')
+    if release_date:
+        currently_playing_info.append(f"The album was released on {release_date}.")
+
+    album_image_url = currently_playing.get('album_image_url', '')
+    if album_image_url:
+        currently_playing_info.append(f"Here's the album cover: {album_image_url}.")
+
+    artists = currently_playing.get('artists', [])
+    if artists:
+        artist_names = ', '.join([artist.get('name', '') for artist in artists])
+        currently_playing_info.append(f"The track features the artists: {artist_names}.")
+
+    is_playable = currently_playing.get('is_playable', '')
+    if is_playable:
+        currently_playing_info.append(f"Is the track playable? {is_playable}.")
+
+    duration_ms = currently_playing.get('duration_ms', '')
+    if duration_ms:
+        currently_playing_info.append(f"The track's duration is {duration_ms} milliseconds.")
+
+    explicit = currently_playing.get('explicit', '')
+    if explicit:
+        currently_playing_info.append(f"Is the track explicit? {explicit}.")
+
+    external_urls = currently_playing.get('external_urls', '')
+    if external_urls:
+        currently_playing_info.append(f"You can listen to it at {external_urls}.")
 
     # Format for queue
     queue_data = []
     for item in data.get("queue", []):
-        queue_info = [
-            f"track_name:{item.get('track_name', '')}",
-            f"track_id:{item.get('track_id', '')}",
-            f"album_name:{item.get('album_name', '')}",
-            f"album_id:{item.get('album_id', '')}",
-            f"album_type:{item.get('album_type', '')}",
-            f"release_date:{item.get('release_date', '')}",
-            f"album_image_url:{item.get('album_image_url', '')}",
-            f"artists:{', '.join([artist.get('name', '') for artist in item.get('artists', [])])}",
-            f"is_playable:{item.get('is_playable', '')}",
-            f"duration_ms:{item.get('duration_ms', '')}",
-            f"explicit:{item.get('explicit', '')}",
-            f"external_urls:{item.get('external_urls', '')}",
-        ]
+        queue_info = []
+
+        track_name = item.get('track_name', '')
+        if track_name:
+            queue_info.append(f"Next track: {track_name}.")
+
+        track_id = item.get('track_id', '')
+        if track_id:
+            queue_info.append(f"Track ID: {track_id}.")
+
+        album_name = item.get('album_name', '')
+        if album_name:
+            queue_info.append(f"Album: {album_name}.")
+
+        album_id = item.get('album_id', '')
+        if album_id:
+            queue_info.append(f"Album ID: {album_id}.")
+
+        album_type = item.get('album_type', '')
+        if album_type:
+            queue_info.append(f"Album type: {album_type}.")
+
+        release_date = item.get('release_date', '')
+        if release_date:
+            queue_info.append(f"Release date: {release_date}.")
+
+        album_image_url = item.get('album_image_url', '')
+        if album_image_url:
+            queue_info.append(f"Album cover: {album_image_url}.")
+
+        artists = item.get('artists', [])
+        if artists:
+            artist_names = ', '.join([artist.get('name', '') for artist in artists])
+            queue_info.append(f"Featuring artists: {artist_names}.")
+
+        is_playable = item.get('is_playable', '')
+        if is_playable:
+            queue_info.append(f"Playable: {is_playable}.")
+
+        duration_ms = item.get('duration_ms', '')
+        if duration_ms:
+            queue_info.append(f"Duration: {duration_ms} milliseconds.")
+
+        explicit = item.get('explicit', '')
+        if explicit:
+            queue_info.append(f"Explicit: {explicit}.")
+
+        external_urls = item.get('external_urls', '')
+        if external_urls:
+            queue_info.append(f"Listen at: {external_urls}.")
+
         queue_data.append(queue_info)
 
     return [currently_playing_info, queue_data]
-
 
 
 # playlist
@@ -726,18 +863,31 @@ def extract_user_playlists_data(json_data):
 #         ]
 #         for playlist in playlists_data
 #     ]
+
 def get_user_playlists_embeddings(docs: list[dict]) -> list[str]:
     formatted = []
     for doc in docs:
-        parts = [
-            f"Playlist Name: {doc.get('playlist_name', '')}",
-            f"Owner: {doc.get('owner', '')}",
-            f"Track Count: {doc.get('track_count', '')}",
-            f"Description: {doc.get('description', '')}",
-        ]
-        formatted.append(" - ".join(part for part in parts if part))
-    return formatted
+        playlist_name = doc.get('playlist_name', '')
+        owner = doc.get('owner', '')
+        track_count = doc.get('track_count', '')
+        description = doc.get('description', '')
 
+        # Build the string in a more readable way
+        formatted_info = []
+
+        if playlist_name:
+            formatted_info.append(f"The playlist is named '{playlist_name}'.")
+        if owner:
+            formatted_info.append(f"The owner of the playlist is {owner}.")
+        if track_count:
+            formatted_info.append(f"The playlist contains {track_count} tracks.")
+        if description:
+            formatted_info.append(f"Description: {description}.")
+
+        # Join all available information
+        formatted.append(" ".join(formatted_info))
+
+    return formatted
 
 
 def extract_featured_playlists_data(playlists_json):
@@ -764,29 +914,45 @@ def extract_featured_playlists_data(playlists_json):
         playlists.append(playlist_data)
 
     return message, playlists
+
 def get_featured_playlists_embeddings(playlists_json):
     message, playlists_data = playlists_json
 
     embeddings = []
     for playlist in playlists_data:
-        embedding = " - ".join([
-            f"Name: {playlist.get('name', '')}",
-            f"Description: {playlist.get('description', '')}",
-            f"URL: {playlist.get('external_url', '')}",
-            f"ID: {playlist.get('id', '')}",
-            f"Image URL: {playlist.get('image_url', '')}",
-            f"Image Height: {playlist.get('image_height', '')}",
-            f"Image Width: {playlist.get('image_width', '')}",
-            f"Owner Name: {playlist.get('owner_name', '')}",
-            f"Owner URL: {playlist.get('owner_external_url', '')}",
-            f"Public: {playlist.get('is_public', '')}",
-            f"Track Count: {playlist.get('tracks_total', '')}",
-            f"URI: {playlist.get('uri', '')}"
-        ])
-        embeddings.append(embedding)
+        # Create a formatted list of strings in sentence form
+        embedding = []
+
+        if playlist.get('name'):
+            embedding.append(f"The featured playlist is named '{playlist.get('name')}'.")
+        if playlist.get('description'):
+            embedding.append(f"Description: {playlist.get('description')}.")
+        if playlist.get('external_url'):
+            embedding.append(f"Visit the playlist at {playlist.get('external_url')}.")
+        if playlist.get('id'):
+            embedding.append(f"Playlist ID: {playlist.get('id')}.")
+        if playlist.get('image_url'):
+            embedding.append(f"Image URL: {playlist.get('image_url')}.")
+        if playlist.get('image_height'):
+            embedding.append(f"Image height: {playlist.get('image_height')} pixels.")
+        if playlist.get('image_width'):
+            embedding.append(f"Image width: {playlist.get('image_width')} pixels.")
+        if playlist.get('owner_name'):
+            embedding.append(f"Owner: {playlist.get('owner_name')}.")
+        if playlist.get('owner_external_url'):
+            embedding.append(f"Owner's profile URL: {playlist.get('owner_external_url')}.")
+        if playlist.get('is_public') is not None:
+            public_status = 'Public' if playlist.get('is_public') else 'Private'
+            embedding.append(f"Public status: {public_status}.")
+        if playlist.get('tracks_total') is not None:
+            embedding.append(f"Track count: {playlist.get('tracks_total')}.")
+        if playlist.get('uri'):
+            embedding.append(f"Playlist URI: {playlist.get('uri')}.")
+
+        # Join the details into a single string and append to embeddings
+        embeddings.append(" ".join(embedding))
 
     return embeddings
-
 
 
 def extract_saved_shows_data(shows_json):
@@ -818,10 +984,16 @@ def extract_saved_shows_data(shows_json):
 def get_saved_shows_embeddings(docs: list[dict]) -> list[str]:
     formatted = []
     for doc in docs:
-        parts = [
-            f'Show name:{doc.get("show_name", "")}',
-            f'Show publisher: {doc.get("show_publisher", "")}',
-            f'Show description: {doc.get("show_description", "")}',
-        ]
-        formatted.append(" - ".join(part for part in parts if part))
+        embedding = []
+
+        if doc.get("show_name"):
+            embedding.append(f"The show is called '{doc.get('show_name')}'.")
+        if doc.get("show_publisher"):
+            embedding.append(f"It is published by {doc.get('show_publisher')}.")
+        if doc.get("show_description"):
+            embedding.append(f"Description: {doc.get('show_description')}.")
+
+        # Join the details into a single string and append to the formatted list
+        formatted.append(" ".join(embedding))
+
     return formatted

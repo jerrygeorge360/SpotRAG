@@ -2,17 +2,24 @@ from flask import Blueprint, render_template, request, url_for, session, redirec
 from flask_login import logout_user,LoginManager,login_required
 from flask_migrate import Migrate
 
+from chromaclass import Chroma, client_config
 from datapipeline import process_user_data
 from helpers import login_user_process
+from llmservice.instructions import first_instruction, second_instruction
+from llmservice.llm import llm
 from oauth import OauthFacade
 from dotenv import load_dotenv
 from models import User,db
 import logging
 import os
 from flask_apscheduler import APScheduler
+import joblib
+from model.model import get_collection_from_prompt
+from flask_login import current_user
 
 load_dotenv()
 app = Flask(__name__)
+model = joblib.load("model/prompt_classifier.joblib")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -155,6 +162,77 @@ def callback_route():
     flash('Invalid or missing code parameter.', 'error')
     return redirect('/login')
 
+@app.route('/prompt', methods=['POST'])
+def prompt():
+    data = request.json.get('prompt')
+    user_id = '1'
+    hallucinated_response = None
+    logger.info(f'Prompt received: {data}')
+
+    if not data:
+        return jsonify({'status': 'failed', 'error': 'No prompt provided'}), 400
+
+    try:
+        # First LLM Call to get hallucinated expansion
+        hallucinated_response = llm(initial_query=data, instruction=first_instruction)
+        hallucinated_response.seek(0)
+        hallucinated_response = hallucinated_response.read()
+    except Exception as e:
+        logger.error('Error during hallucinated LLM processing: %s', str(e))
+        hallucinated_response = None
+
+    try:
+        joint_query = f"{hallucinated_response.strip()} {data.strip()}" if hallucinated_response else data.strip()
+
+        # Get relevant collections
+        filtered_collections = get_collection_from_prompt(model,joint_query, threshold=0.5)
+        logger.info(f'Prediction result: {filtered_collections}')
+
+        chroma_obj = Chroma(client_config)
+        responses = []
+
+        # Query each relevant collection
+        for collection_name in filtered_collections:
+            chroma_obj.use_collection(name=f'{user_id}{collection_name}')
+            query_response = chroma_obj.query_collection(param={'query': joint_query}, name=f'{user_id}{collection_name}')
+
+            if query_response:
+                responses.append({
+                    'collection': collection_name,
+                    'query_response': query_response
+                })
+                logger.info(f"Found relevant data in {collection_name}: {query_response}")
+            else:
+                logger.info(f"No relevant data found in {collection_name}.")
+
+        if not responses:
+            return jsonify({'status': 'failed', 'message': 'No relevant data found for the prompt'}), 404
+
+        # Prepare final input for second LLM call
+        try:
+            final_input_for_llm = f"The user is asking: {joint_query}\n\nHere is some relevant data:\n"
+
+            for response in responses:
+                collection_name = response['collection']
+                query_response = response['query_response']
+                final_input_for_llm += f"From collection '{collection_name}':\n{query_response}\n\n"
+
+            generated_response = llm(initial_query=final_input_for_llm, instruction=second_instruction)
+            generated_response.seek(0)
+            generated_response = generated_response.read()
+
+            return jsonify({
+                'status': 'success',
+                'data': generated_response
+            })
+
+        except Exception as e:
+            logger.error('Error during final LLM processing: %s', str(e))
+            return jsonify({'status': 'failed', 'error': 'Error generating final response'}), 500
+
+    except Exception as e:
+        logger.error(f'Error during prediction: {str(e)}')
+        return jsonify({'status': 'failed', 'error': str(e)}), 500
 
 
 @app.route('/logout')
@@ -173,12 +251,12 @@ def logout():
 def job():
     print("🧠 This runs every 20 seconds")
 
-scheduler.add_job(
-    id='spotify_user_pipeline',
-    func=process_user_data,
-    trigger='interval',
-    hours=12,
-    kwargs={'object': app}
-)
+# scheduler.add_job(
+#     id='spotify_user_pipeline',
+#     func=process_user_data,
+#     trigger='interval',
+#     hours=12,
+#     kwargs={'object': app}
+# )
 if __name__  == '__main__':
     app.run(debug=True)

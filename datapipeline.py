@@ -5,7 +5,6 @@ from spotifyextractors import  *
 from chromaclass import client_config,Chroma
 import os
 from dotenv import load_dotenv
-# from web import app
 
 load_dotenv()
 client_id = os.getenv('SPOTIFY_CLIENT_ID')

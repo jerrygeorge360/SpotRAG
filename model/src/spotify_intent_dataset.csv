@@ -1,0 +1,242 @@
+prompt,label
+What's my Spotify username?,user_details
+Show me my account details.,user_details
+How many followers do I have?,user_details
+What country is my account set to?,user_details
+Display my Spotify email.,user_details
+Do I have a premium account?,user_details
+What’s my current subscription status?,user_details
+What’s my profile name?,user_details
+What’s the date I joined Spotify?,user_details
+Am I currently active on any device?,user_details
+Give me my profile picture.,user_details
+What's my Spotify ID?,user_details
+Do I have family or student plan?,user_details
+Check my account type.,user_details
+What language is my account in?,user_details
+Get my Spotify preferences.,user_details
+List all of my account settings.,user_details
+What’s my plan expiration date?,user_details
+Show my Spotify join date.,user_details
+Do I have any active premium plan?,user_details
+When did I create my Spotify account?,user_details
+List the artists I follow.,followed_artists
+Who are my favorite artists?,followed_artists
+Show my followed musicians.,followed_artists
+Am I following Drake?,followed_artists
+Who’s the last artist I followed?,followed_artists
+Show artists I recently added.,followed_artists
+Which artists do I keep track of?,followed_artists
+Let me see my followed rappers.,followed_artists
+Who are in my followed artists list?,followed_artists
+Get the complete list of artists I follow.,followed_artists
+Any new music from artists I follow?,followed_artists
+Am I still following Taylor Swift?,followed_artists
+Remove an artist I follow.,followed_artists
+Suggest artists similar to the ones I follow.,followed_artists
+Who are my top followed artists?,followed_artists
+List indie artists I follow.,followed_artists
+Which artists have I been following longest?,followed_artists
+Show pop artists I follow.,followed_artists
+Did I follow The Weeknd?,followed_artists
+Check my followed bands.,followed_artists
+What albums have I saved?,user_albums
+List my favorite albums.,user_albums
+Show all my albums.,user_albums
+What’s the last album I added?,user_albums
+Any new albums in my library?,user_albums
+Display my album collection.,user_albums
+Which albums have I liked?,user_albums
+Show albums by genre in my library.,user_albums
+Give me my saved rock albums.,user_albums
+How many albums have I saved?,user_albums
+Do I have any jazz albums saved?,user_albums
+What’s the most recent album I saved?,user_albums
+List albums by Taylor Swift I’ve saved.,user_albums
+Delete this album from my collection.,user_albums
+Add this album to my library.,user_albums
+Filter my albums by year.,user_albums
+What albums did I save last week?,user_albums
+Do I have “The Chronic” album saved?,user_albums
+Browse my R&B albums.,user_albums
+Sort my albums by release date.,user_albums
+What’s new on Spotify?,new_releases
+Show the latest album releases.,new_releases
+Any new songs this week?,new_releases
+What are today’s new music drops?,new_releases
+List newly released albums.,new_releases
+Who dropped new music today?,new_releases
+New albums from artists I follow?,new_releases
+Latest hip-hop releases?,new_releases
+Recommend me new music.,new_releases
+Browse today’s new releases.,new_releases
+New albums in my region?,new_releases
+Show just released tracks.,new_releases
+Are there any new Nigerian albums?,new_releases
+What just came out?,new_releases
+Any new Afrobeat songs?,new_releases
+What did Spotify release this week?,new_releases
+Display top trending new albums.,new_releases
+What are the hot new tracks?,new_releases
+Show me brand new music.,new_releases
+Latest indie releases?,new_releases
+What audiobooks do I have?,user_audio_books
+List my saved audiobooks.,user_audio_books
+Show audiobooks I’ve listened to.,user_audio_books
+Any new audiobooks I added?,user_audio_books
+Do I have fiction audiobooks?,user_audio_books
+Recommend me an audiobook.,user_audio_books
+What’s my latest audiobook?,user_audio_books
+Show my downloaded audiobooks.,user_audio_books
+What audiobooks are in my library?,user_audio_books
+Which audiobooks am I currently listening to?,user_audio_books
+Resume my last audiobook.,user_audio_books
+Show all thriller audiobooks I saved.,user_audio_books
+List motivational audiobooks I have.,user_audio_books
+Play the last audiobook I saved.,user_audio_books
+Are there any audiobooks I haven't finished?,user_audio_books
+How many audiobooks have I listened to?,user_audio_books
+Can you show my saved non-fiction audiobooks?,user_audio_books
+Which audiobooks are completed?,user_audio_books
+List the authors of my audiobooks.,user_audio_books
+Suggest an audiobook from my library.,user_audio_books
+What podcast episodes have I saved?,user_saved_episodes
+List my bookmarked episodes.,user_saved_episodes
+Show my saved podcast content.,user_saved_episodes
+Do I have any episodes downloaded?,user_saved_episodes
+What’s the most recent episode I saved?,user_saved_episodes
+Show the last podcast I saved.,user_saved_episodes
+List episodes I haven’t played.,user_saved_episodes
+What episodes are pending in my list?,user_saved_episodes
+Show the latest episode from The Daily.,user_saved_episodes
+Save this episode to my library.,user_saved_episodes
+Unsave an episode I didn’t like.,user_saved_episodes
+Play my last saved episode.,user_saved_episodes
+What podcast episodes have I liked?,user_saved_episodes
+Give me a list of my saved tech episodes.,user_saved_episodes
+Find all saved news episodes.,user_saved_episodes
+What are the newest saved episodes?,user_saved_episodes
+List comedy episodes in my saved list.,user_saved_episodes
+Do I have episodes from Joe Rogan?,user_saved_episodes
+Show saved Spotify Originals.,user_saved_episodes
+Resume my saved episode.,user_saved_episodes
+What devices can I play music on?,user_available_devices
+List my Spotify devices.,user_available_devices
+Show all available output devices.,user_available_devices
+Can I switch to my smart TV?,user_available_devices
+Is my phone connected to Spotify?,user_available_devices
+Play music on my laptop.,user_available_devices
+What’s my current device?,user_available_devices
+Show all my connected devices.,user_available_devices
+Is my Echo available?,user_available_devices
+Add a new device to my account.,user_available_devices
+Remove a device.,user_available_devices
+Check all devices currently online.,user_available_devices
+Can I play on my Bluetooth speaker?,user_available_devices
+What device is Spotify active on?,user_available_devices
+Show devices with Spotify Connect.,user_available_devices
+What device was used last?,user_available_devices
+Is my PlayStation connected?,user_available_devices
+Show devices with download enabled.,user_available_devices
+List my Spotify playback sources.,user_available_devices
+Control music on my tablet.,user_available_devices
+What have I been listening to?,user_played_tracks
+Show my recently played songs.,user_played_tracks
+List tracks I listened to today.,user_played_tracks
+What’s the last track I played?,user_played_tracks
+Give me my last 10 tracks.,user_played_tracks
+Show me yesterday’s tracks.,user_played_tracks
+What’s been on repeat?,user_played_tracks
+Which songs did I play last night?,user_played_tracks
+What did I listen to this week?,user_played_tracks
+Play my last played track.,user_played_tracks
+What’s the most played track?,user_played_tracks
+Get my listening history.,user_played_tracks
+What was the first song today?,user_played_tracks
+Find my top played songs today.,user_played_tracks
+Show me tracks I heard in the morning.,user_played_tracks
+Give me a history of my plays.,user_played_tracks
+What songs did I loop today?,user_played_tracks
+Show my repeat songs.,user_played_tracks
+Replay the songs I just finished.,user_played_tracks
+Play my listening log.,user_played_tracks
+What’s in my queue?,user_queue
+Show my Spotify play queue.,user_queue
+What songs will play next?,user_queue
+List the tracks coming up.,user_queue
+Add this song to my queue.,user_queue
+Remove that from the queue.,user_queue
+What’s next after this track?,user_queue
+Show me the next 5 songs.,user_queue
+Clear my queue.,user_queue
+Insert a song to the top of the queue.,user_queue
+Move this track in the queue.,user_queue
+What's the queue order?,user_queue
+Show current queue contents.,user_queue
+How many tracks are queued?,user_queue
+Queue this album.,user_queue
+Play my current queue.,user_queue
+Skip this track in the queue.,user_queue
+Play a different queue.,user_queue
+Replace my queue with this playlist.,user_queue
+Add podcast to queue.,user_queue
+What playlists do I have?,user_playlist
+Show my playlists.,user_playlist
+Create a new playlist.,user_playlist
+Add this track to a playlist.,user_playlist
+List songs in my workout playlist.,user_playlist
+What’s my most played playlist?,user_playlist
+Delete a playlist I made.,user_playlist
+Rename my chill playlist.,user_playlist
+Share my top playlist.,user_playlist
+Sort my playlists by name.,user_playlist
+Merge two playlists.,user_playlist
+Show my collaborative playlists.,user_playlist
+What’s in my jazz playlist?,user_playlist
+Recommend tracks for my playlist.,user_playlist
+Get the cover of my playlist.,user_playlist
+How many playlists have I created?,user_playlist
+Duplicate a playlist.,user_playlist
+Edit my sleep playlist.,user_playlist
+List playlists I liked.,user_playlist
+Add album to playlist.,user_playlist
+Show me featured playlists.,featured_playlist
+What are Spotify’s top playlists?,featured_playlist
+Any trending playlists today?,featured_playlist
+Give me curated playlists.,featured_playlist
+What’s Spotify promoting now?,featured_playlist
+Show me editor picks.,featured_playlist
+Top charts playlists?,featured_playlist
+Recommend a featured playlist.,featured_playlist
+Any good mood playlists?,featured_playlist
+What are popular playlists right now?,featured_playlist
+What’s in the Discover Weekly?,featured_playlist
+Explore today’s featured mixes.,featured_playlist
+What’s this week’s spotlight playlist?,featured_playlist
+Show Afrobeat featured playlists.,featured_playlist
+Give me party playlists from Spotify.,featured_playlist
+Browse global top playlists.,featured_playlist
+Give me new featured releases.,featured_playlist
+What’s hot on Spotify now?,featured_playlist
+Any chill featured playlists?,featured_playlist
+Give me Spotify’s latest playlists.,featured_playlist
+What podcasts have I saved?,user_saved_shows
+List my saved shows.,user_saved_shows
+What shows do I follow?,user_saved_shows
+Show podcasts I subscribed to.,user_saved_shows
+Do I follow The Daily?,user_saved_shows
+What’s the latest episode from my shows?,user_saved_shows
+Add this show to my library.,user_saved_shows
+Remove a podcast from my shows.,user_saved_shows
+List my comedy podcasts.,user_saved_shows
+What podcasts am I subscribed to?,user_saved_shows
+Give me my podcast library.,user_saved_shows
+Do I have news podcasts saved?,user_saved_shows
+What’s the newest show I added?,user_saved_shows
+Resume a show I saved.,user_saved_shows
+Search inside my saved podcasts.,user_saved_shows
+What’s trending in my shows?,user_saved_shows
+Are there shows I haven’t listened to yet?,user_saved_shows
+Show my complete podcast list.,user_saved_shows
+Play the first episode of a show I saved.,user_saved_shows
+Recommend shows from my saved ones.,user_saved_shows
