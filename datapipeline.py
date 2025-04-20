@@ -206,6 +206,7 @@ def process_user_data(object):
 
                         else:
                             chroma.create_collection(f'{user_id}{collection_name}',metadata={'type':collection_name})
+                            print(f'{user_id}{collection_name}')
                             print('this is doc pso')
                             print(docs[pos])
                             chroma.add_to_collection({'documents':docs[pos],'metadatas': [{'source': collection_name} for _ in docs[pos]],'ids': [f'{collection_name}_{pos}_{i}' for i in range(len(docs[pos]))]},f'{user_id}{collection_name}')

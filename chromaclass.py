@@ -124,3 +124,6 @@ class Chroma(ChromaObj):
         print(collection_list)
         collection_status = any(col == name for col in collection_list)
         return collection_status
+    def list_collections(self):
+        collection_list = self.client.list_collections()
+        return collection_list

@@ -164,6 +164,14 @@ def callback_route():
 
 @app.route('/prompt', methods=['POST'])
 def prompt():
+    """
+    Process a user's prompt:
+    1. Generate hallucinated expansion with LLM.
+    2. Identify relevant collections based on joint prompt.
+    3. Query those collections for data.
+    4. Feed retrieved data + original prompt into second LLM.
+    5. Return final generated response.
+    """
     data = request.json.get('prompt')
     user_id = '1'
     hallucinated_response = None
@@ -172,50 +180,58 @@ def prompt():
     if not data:
         return jsonify({'status': 'failed', 'error': 'No prompt provided'}), 400
 
+    # Step 1: Generate hallucinated response
     try:
-        # First LLM Call to get hallucinated expansion
         hallucinated_response = llm(initial_query=data, instruction=first_instruction)
         hallucinated_response.seek(0)
         hallucinated_response = hallucinated_response.read()
+        logger.info(f'Hallucinated response: {hallucinated_response}')
     except Exception as e:
-        logger.error('Error during hallucinated LLM processing: %s', str(e))
+        logger.error(f'Error during hallucinated LLM processing: {str(e)}')
         hallucinated_response = None
 
     try:
+        # Step 2: Construct joint query
         joint_query = f"{hallucinated_response.strip()} {data.strip()}" if hallucinated_response else data.strip()
 
-        # Get relevant collections
-        filtered_collections = get_collection_from_prompt(model,joint_query, threshold=0.5)
+        # Step 3: Predict relevant collections
+        filtered_collections = get_collection_from_prompt(model, joint_query, threshold=0.5)
         logger.info(f'Prediction result: {filtered_collections}')
 
         chroma_obj = Chroma(client_config)
         responses = []
 
-        # Query each relevant collection
+        # Step 4: Query collections
         for collection_name in filtered_collections:
-            chroma_obj.use_collection(name=f'{user_id}{collection_name}')
-            query_response = chroma_obj.query_collection(param={'query': joint_query}, name=f'{user_id}{collection_name}')
+            full_collection_name = f'{user_id}{collection_name[0]}'
+            logger.info(f"Querying collection: {full_collection_name}")
 
-            if query_response:
-                responses.append({
-                    'collection': collection_name,
-                    'query_response': query_response
-                })
-                logger.info(f"Found relevant data in {collection_name}: {query_response}")
+            if chroma_obj.collection_exist(name=full_collection_name):
+                chroma_obj.use_collection(name=full_collection_name)
+                query_response = chroma_obj.query_collection(
+                    param={'query': joint_query},
+                    name=full_collection_name
+                )
+
+                if query_response:
+                    responses.append({
+                        'collection': collection_name[0],
+                        'query_response': query_response
+                    })
+                    logger.info(f"Found relevant data in {collection_name[0]}: {query_response}")
+                else:
+                    logger.info(f"No relevant data found in {collection_name[0]}.")
             else:
-                logger.info(f"No relevant data found in {collection_name}.")
+                logger.info(f"Collection {full_collection_name} does not exist.")
 
         if not responses:
             return jsonify({'status': 'failed', 'message': 'No relevant data found for the prompt'}), 404
 
-        # Prepare final input for second LLM call
+        # Step 5: Generate final response with LLM
         try:
             final_input_for_llm = f"The user is asking: {joint_query}\n\nHere is some relevant data:\n"
-
             for response in responses:
-                collection_name = response['collection']
-                query_response = response['query_response']
-                final_input_for_llm += f"From collection '{collection_name}':\n{query_response}\n\n"
+                final_input_for_llm += f"From collection '{response['collection']}':\n{response['query_response']}\n\n"
 
             generated_response = llm(initial_query=final_input_for_llm, instruction=second_instruction)
             generated_response.seek(0)
@@ -227,13 +243,12 @@ def prompt():
             })
 
         except Exception as e:
-            logger.error('Error during final LLM processing: %s', str(e))
+            logger.error(f'Error during final LLM processing: {str(e)}')
             return jsonify({'status': 'failed', 'error': 'Error generating final response'}), 500
 
     except Exception as e:
         logger.error(f'Error during prediction: {str(e)}')
         return jsonify({'status': 'failed', 'error': str(e)}), 500
-
 
 @app.route('/logout')
 def logout():
@@ -247,7 +262,7 @@ def logout():
 
     return redirect('/')
 
-@scheduler.task('interval', id='dynamic_job', seconds=20)
+@scheduler.task('interval', id='dynamic_job', minutes=20)
 def job():
     print("🧠 This runs every 20 seconds")
 
