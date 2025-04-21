@@ -335,16 +335,16 @@ def logout():
 
     return redirect('/')
 
-@scheduler.task('interval', id='dynamic_job', minutes=20)
-def job():
-    print("🧠 This runs every 20 seconds")
+# @scheduler.task('interval', id='dynamic_job', minutes=20)
+# def job():
+#     print("🧠 This runs every 20 seconds")
 
-# scheduler.add_job(
-#     id='spotify_user_pipeline',
-#     func=process_user_data,
-#     trigger='interval',
-#     hours=12,
-#     kwargs={'object': app}
-# )
+scheduler.add_job(
+    id='spotify_user_pipeline',
+    func=process_user_data,
+    trigger='interval',
+    hours=12,
+    kwargs={'object': app}
+)
 if __name__  == '__main__':
     app.run(debug=True)
