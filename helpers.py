@@ -1,6 +1,8 @@
 from enum import Enum, auto
 from  flask import session,jsonify
 import logging
+
+from llmservice.llm import llm
 from oauth import TwitchUserService, GithubUserService, SpotifyUserService, extract_twitch_info
 from models import db,User
 from flask_login import login_user, logout_user, current_user
@@ -125,3 +127,30 @@ def login_user_process():
 
     return jsonify({'status':'success','message':'user logged in','data':user_data}),201
 
+def build_llm_prompt(context: str, joint_query: str) -> str:
+    return f"""
+The user previously asked:
+{context}
+
+The user is asking:
+{joint_query}
+
+Here is some information that might help answer the question:
+"""
+def requires_vector_data(prompt: str) -> bool:
+    """
+    Returns True if external data is required.
+    Uses a mini LLM classification for now.
+    """
+    instruction = """
+Determine if the user prompt requires external data to answer.
+Reply with only 'yes' or 'no'.
+"""
+    try:
+        decision = llm(initial_query=prompt, instruction=instruction)
+        decision.seek(0)
+        decision = decision.read().strip().lower()
+        return decision == 'yes'
+    except Exception as e:
+        logger.warning(f"Fallback: assuming no vector data required due to error: {e}")
+        return False  # Fallback to LLM only

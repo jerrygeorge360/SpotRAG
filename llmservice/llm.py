@@ -7,8 +7,6 @@ import logging
 
 from llmservice.instructions import first_instruction, second_instruction
 
-# from services.llmservice.instructions import first_instruction, second_instruction
-
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -103,12 +101,3 @@ def llm(instruction: str, initial_query: str)->io.StringIO|None:
     except Exception as e:
         logger.error("An error occurred in the main execution: %s", str(e))
         return None
-#
-# a= llm(initial_query='the list of albums you have are adele,eminem',instruction=second_instruction)
-# a.seek(0)
-# print(a.read())
-# #
-# scanned_text = 'what is 2 ^ 5? \n it is 64'
-# llm_tumbler_response = generate_modified_response(first_instruction=first_instruction,second_instruction=second_instruction,initial_query=scanned_text)
-# a = llm_tumbler_response.read()
-# print(a)

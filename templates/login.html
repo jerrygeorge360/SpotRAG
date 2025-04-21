@@ -3,103 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OAuth Login</title>
-   <style>
+    <title>Login | OAuth</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            margin: 0;
+            height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f0f0f0;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1db954, #1ed760);
         }
 
         .container {
+            background: #fff;
+            padding: 2.5rem 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
             text-align: center;
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
         }
 
         h1 {
-            margin-bottom: 20px;
-            font-size: 2rem;
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            color: #222;
         }
 
         p {
-            font-size: 1.2rem;
-        }
-
-        .auth-links {
-            display: flex;
-            justify-content: space-around;
-            margin-top: 20px;
+            font-size: 1rem;
+            color: #555;
+            margin-bottom: 2rem;
         }
 
         .auth-button {
             display: flex;
             align-items: center;
+            justify-content: center;
+            gap: 12px;
             text-decoration: none;
-            padding: 10px 20px;
+            padding: 12px 20px;
             font-size: 1rem;
-            border-radius: 5px;
-            background-color: #444;
+            border-radius: 8px;
+            background-color: #1db954;
             color: white;
-            transition: background-color 0.3s ease;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease;
         }
 
         .auth-button:hover {
-            background-color: #555;
+            background-color: #17a84d;
+            transform: translateY(-1px);
         }
 
         .auth-icon {
-            width: 20px;
             height: 20px;
-            margin-right: 10px;
+            width: 20px;
         }
 
-        .github {
-            background-color: #333;
-        }
+        @media (max-width: 500px) {
+            .container {
+                margin: 1rem;
+                padding: 2rem 1.5rem;
+            }
 
-        .twitch {
-            background-color: #9146FF;
-        }
+            h1 {
+                font-size: 1.5rem;
+            }
 
-        .spotify {
-            background-color: #1DB954;
+            p {
+                font-size: 0.95rem;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Login to Your Account</h1>
+        <h1>Login with Spotify</h1>
+        <p>Connect your Spotify account to get started.</p>
 
-        <p>Please select a service to log in:</p>
-
-        <div class="auth-links">
-            <!-- GitHub Login -->
-            <a href="{{ auth_links['github_link'] }}" class="auth-button github">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" alt="GitHub" class="auth-icon">
-                Log in with GitHub
-            </a>
-
-            <!-- Twitch Login -->
-            <a href="{{ auth_links['twitch_link'] }}" class="auth-button twitch">
-                <img src="https://static.twitch.tv/astro/brands/global/twitch-logo.svg" class="auth-icon">
-                Log in with Twitch
-            </a>
-
-            <!-- Spotify Login -->
-            <a href="{{ auth_links['spotify_link'] }}" class="auth-button spotify">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/1/1e/Spotify_logo_with_text.svg" class="auth-icon">
-                Log in with Spotify
-            </a>
-        </div>
+        <a href="{{ auth_links['spotify_link'] }}" class="auth-button">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg" alt="Spotify Logo" class="auth-icon">
+            Continue with Spotify
+        </a>
     </div>
-
-
 </body>
 </html>

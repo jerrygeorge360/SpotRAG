@@ -1,11 +1,13 @@
+from uuid import uuid4
+
 from flask import Blueprint, render_template, request, url_for, session, redirect, flash, jsonify, Flask
 from flask_login import logout_user,LoginManager,login_required
 from flask_migrate import Migrate
 
 from chromaclass import Chroma, client_config
 from datapipeline import process_user_data
-from helpers import login_user_process
-from llmservice.instructions import first_instruction, second_instruction
+from helpers import login_user_process, build_llm_prompt, requires_vector_data
+from llmservice.instructions import first_instruction, second_instruction, third_instruction
 from llmservice.llm import llm
 from oauth import OauthFacade
 from dotenv import load_dotenv
@@ -63,7 +65,16 @@ SPOTIFY_SCOPE =[
     "playlist-modify-public",
     "playlist-modify-private"
 ]
-
+MAX_HISTORY = 6
+@app.before_request
+def assign_user():
+    if current_user.is_authenticated:
+        # Use current_user.id as session identifier
+        session.setdefault('chat_history', [])
+    else:
+        # For anonymous users (not logged in), generate temp session
+        session.setdefault('user_id', str(uuid4()))
+        session.setdefault('chat_history', [])
 
 # User loader for Flask-Login
 @login_manager.user_loader
@@ -163,6 +174,7 @@ def callback_route():
     return redirect('/login')
 
 @app.route('/prompt', methods=['POST'])
+@login_required
 def prompt():
     """
     Process a user's prompt:
@@ -172,84 +184,145 @@ def prompt():
     4. Feed retrieved data + original prompt into second LLM.
     5. Return final generated response.
     """
+    if not request.is_json:
+        return jsonify({'status': 'failed', 'error': 'Invalid content type, expected application/json'}), 400
+
     data = request.json.get('prompt')
-    user_id = '1'
-    hallucinated_response = None
+    user_id = current_user.id
+    hallucinated_response = ''
     logger.info(f'Prompt received: {data}')
 
     if not data:
         return jsonify({'status': 'failed', 'error': 'No prompt provided'}), 400
 
+    history = session.get('chat_history', [])
+
+    context = "\n".join([
+        f"User: {entry['user']}\nAssistant: {entry['assistant']}"
+        for entry in history
+    ])
+    needs_vector_data = requires_vector_data(data)
+    logger.info(f"Prompt intent: {'Vector DB' if needs_vector_data else 'Direct LLM'}")
     # Step 1: Generate hallucinated response
-    try:
-        hallucinated_response = llm(initial_query=data, instruction=first_instruction)
-        hallucinated_response.seek(0)
-        hallucinated_response = hallucinated_response.read()
-        logger.info(f'Hallucinated response: {hallucinated_response}')
-    except Exception as e:
-        logger.error(f'Error during hallucinated LLM processing: {str(e)}')
-        hallucinated_response = None
-
-    try:
-        # Step 2: Construct joint query
-        joint_query = f"{hallucinated_response.strip()} {data.strip()}" if hallucinated_response else data.strip()
-
-        # Step 3: Predict relevant collections
-        filtered_collections = get_collection_from_prompt(model, joint_query, threshold=0.5)
-        logger.info(f'Prediction result: {filtered_collections}')
-
-        chroma_obj = Chroma(client_config)
-        responses = []
-
-        # Step 4: Query collections
-        for collection_name in filtered_collections:
-            full_collection_name = f'{user_id}{collection_name[0]}'
-            logger.info(f"Querying collection: {full_collection_name}")
-
-            if chroma_obj.collection_exist(name=full_collection_name):
-                chroma_obj.use_collection(name=full_collection_name)
-                query_response = chroma_obj.query_collection(
-                    param={'query': joint_query},
-                    name=full_collection_name
-                )
-
-                if query_response:
-                    responses.append({
-                        'collection': collection_name[0],
-                        'query_response': query_response
-                    })
-                    logger.info(f"Found relevant data in {collection_name[0]}: {query_response}")
-                else:
-                    logger.info(f"No relevant data found in {collection_name[0]}.")
-            else:
-                logger.info(f"Collection {full_collection_name} does not exist.")
-
-        if not responses:
-            return jsonify({'status': 'failed', 'message': 'No relevant data found for the prompt'}), 404
-
-        # Step 5: Generate final response with LLM
+    if needs_vector_data:
         try:
-            final_input_for_llm = f"The user is asking: {joint_query}\n\nHere is some relevant data:\n"
-            for response in responses:
-                final_input_for_llm += f"From collection '{response['collection']}':\n{response['query_response']}\n\n"
+            chroma_obj = None
+            if needs_vector_data:
+                chroma_obj = Chroma(client_config)
+        except Exception as e:
+            logger.error(f'Error initializing Chroma: {str(e)}')
+            return jsonify({'status': 'failed', 'error': 'Internal server error during setup'}), 500
 
-            generated_response = llm(initial_query=final_input_for_llm, instruction=second_instruction)
-            generated_response.seek(0)
-            generated_response = generated_response.read()
+        try:
+            hallucinated_response = llm(initial_query=data, instruction=first_instruction)
+            hallucinated_response.seek(0)
+            if hasattr(hallucinated_response, 'read'):
+                hallucinated_response = hallucinated_response.read()
 
-            return jsonify({
-                'status': 'success',
-                'data': generated_response
-            })
+            logger.info(f'Hallucinated response: {hallucinated_response}')
+        except Exception as e:
+            logger.error(f'Error during hallucinated LLM processing: {str(e)}')
+            hallucinated_response = ''
+
+        try:
+            # Step 2: Construct joint query
+            joint_query = f"{hallucinated_response.strip()} {data.strip()}" if hallucinated_response else data.strip()
+
+            # Step 3: Predict relevant collections
+            filtered_collections = get_collection_from_prompt(model, joint_query, threshold=0.5)
+            logger.info(f'Prediction result: {filtered_collections}')
+
+
+            responses = []
+
+            # Step 4: Query collections
+            for collection_name in filtered_collections:
+                full_collection_name = f'{user_id}{collection_name[0]}'
+                logger.info(f"Querying collection: {full_collection_name}")
+
+                if chroma_obj.collection_exist(name=full_collection_name):
+                    chroma_obj.use_collection(name=full_collection_name)
+                    query_response = chroma_obj.query_collection(
+                        param={'query': joint_query},
+                        name=full_collection_name
+                    )
+
+                    if query_response:
+                        responses.append({
+                            'collection': collection_name[0],
+                            'query_response': query_response
+                        })
+                        logger.info(f"Found relevant data in {collection_name[0]}: {query_response}")
+                    else:
+                        logger.info(f"No relevant data found in {collection_name[0]}.")
+                else:
+                    logger.info(f"Collection {full_collection_name} does not exist.")
+
+            if not responses:
+                return jsonify({'status': 'failed', 'message': 'No relevant data found for the prompt'}), 404
+
+            # Step 5: Generate final response with LLM
+            try:
+
+                final_input_for_llm = build_llm_prompt(context, joint_query)
+                print(final_input_for_llm)
+                for response in responses:
+                    final_input_for_llm += f"From collection '{response['collection']}':\n{response['query_response']}\n\n"
+
+                generated_response = llm(initial_query=final_input_for_llm, instruction=second_instruction)
+                generated_response.seek(0)
+                generated_response = generated_response.read()
+
+                history.append({
+                    'user': data,
+                    'assistant': generated_response
+                })
+
+                if len(history) > MAX_HISTORY:
+                    history = history[-MAX_HISTORY:]
+
+                try:
+                    print(len(session.get('chat_history')))
+                    session['chat_history'] = history
+                except Exception as e:
+                    logger.error(f'Failed to save chat history: {str(e)}')
+
+                return jsonify({
+                    'status': 'success',
+                    'data': generated_response
+                })
+
+            except Exception as e:
+                logger.error(f'Error during final LLM processing: {str(e)}')
+                hallucinated_response = ''
+                return jsonify({'status': 'failed', 'error': 'Error generating final response'}), 500
 
         except Exception as e:
-            logger.error(f'Error during final LLM processing: {str(e)}')
-            return jsonify({'status': 'failed', 'error': 'Error generating final response'}), 500
+            logger.error(f'Error during prediction: {str(e)}')
+            return jsonify({'status': 'failed', 'error': str(e)}), 500
+    else:
+        try:
+            final_input = build_llm_prompt(context, data.strip())
+            logger.info(f'LLM-only prompt: {final_input}')
 
-    except Exception as e:
-        logger.error(f'Error during prediction: {str(e)}')
-        return jsonify({'status': 'failed', 'error': str(e)}), 500
+            response = llm(initial_query=final_input, instruction=third_instruction)
+            response.seek(0)
+            response = response.read()
 
+            history.append({'user': data, 'assistant': response})
+            if len(history) > MAX_HISTORY:
+                history = history[-MAX_HISTORY:]
+
+            try:
+                session['chat_history'] = history
+            except Exception as e:
+                logger.error(f'Failed to save chat history: {str(e)}')
+
+            return jsonify({'status': 'success', 'data': response})
+
+        except Exception as e:
+            logger.error(f'Error during LLM-only generation: {str(e)}')
+            return jsonify({'status': 'failed', 'error': 'LLM-only response failed'}), 500
 @app.route('/logout')
 def logout():
     logger.info('User initiated logout.')
