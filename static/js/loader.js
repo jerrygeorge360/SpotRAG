@@ -19,7 +19,7 @@ async function checkStatus() {
             }, 2000);  // slight delay for user to see the message
         } else {
             console.log('⏳ Still processing... Checking again in 2 seconds.');
-            setTimeout(checkStatus, 2000);  // keep polling if still processing
+            setTimeout(checkStatus, 5000);  // keep polling if still processing
         }
     } catch (error) {
         console.error('⚠️ Error checking processing status:', error);
@@ -27,3 +27,5 @@ async function checkStatus() {
         // Do not redirect here — let user manually refresh or recover
     }
 }
+
+checkStatus()

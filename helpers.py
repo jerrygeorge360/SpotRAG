@@ -1,4 +1,4 @@
-from enum import Enum, auto
+
 from  flask import session,jsonify
 import logging
 
@@ -14,7 +14,8 @@ import json
 import os
 from dotenv import load_dotenv
 
-from web import user_processing_status
+
+user_processing_status = {}
 
 load_dotenv()
 spotify_client_id = os.getenv('SPOTIFY_CLIENT_ID')
@@ -227,10 +228,10 @@ Reply with only 'yes' or 'no'.
         logger.warning(f"Fallback: assuming no vector data required due to error: {e}")
         return False  # Fallback to LLM only
 
-def background_process(app, user_id):
-    with app.app_context():
+def background_process(object, user_id):
+    with object.app_context():
         try:
-            process_user_data(app, user_id)
+            process_user_data(object, user_id)
             user_processing_status[user_id] = 'done'
         except Exception as err:
             logger.error(f'Error in background processing: {err}')

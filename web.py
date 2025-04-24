@@ -1,12 +1,12 @@
 from uuid import uuid4
 import threading
-from flask import Blueprint, render_template, request, url_for, session, redirect, flash, jsonify, Flask
+from flask import render_template, request, url_for, session, redirect, flash, jsonify, Flask
 from flask_login import logout_user, LoginManager, login_required
 from flask_migrate import Migrate
 
 from chromaclass import Chroma, client_config
 from datapipeline import process_user_data
-from helpers import login_user_process, build_llm_prompt, requires_vector_data, background_process
+from helpers import login_user_process, build_llm_prompt, requires_vector_data, background_process,user_processing_status
 from llmservice.instructions import first_instruction, second_instruction, third_instruction
 from llmservice.llm import llm
 from oauth import OauthFacade
@@ -65,7 +65,6 @@ SPOTIFY_SCOPE = [
     "playlist-modify-private"
 ]
 MAX_HISTORY = 6
-user_processing_status = {}
 
 
 @app.before_request
@@ -530,4 +529,5 @@ scheduler.add_job(
     kwargs={'object': app}
 )
 if __name__ == '__main__':
-    app.run(debug=True)
+    if os.environ.get('FLASK_ENV') == 'development':
+        app.run(debug=True)  # Only run Flask's built-in server in development mode
