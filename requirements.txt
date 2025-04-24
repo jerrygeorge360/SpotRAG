@@ -130,6 +130,7 @@ threadpoolctl==3.6.0
 tokenizers==0.21.0
 toml==0.10.2
 tomli==2.2.1
+--index-url https://download.pytorch.org/whl/cpu
 torch==2.6.0+cpu
 tornado==6.4.2
 tqdm==4.67.1
