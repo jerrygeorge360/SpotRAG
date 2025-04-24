@@ -15,9 +15,28 @@ logger = logging.getLogger(__name__)
 
 chroma = Chroma(client_config)
 COLLECTION_NAMES = ['user_details','followed_artists','user_albums','new_releases','user_audio_books','user_saved_episodes','user_available_devices','user_played_tracks','user_queue','user_playlist','featured_playlist','user_saved_shows']
-def process_user_data(object):
+def process_user_data(object,user_id=None):
+    """
+    Processes user data by interacting with the Spotify API and updating or creating document collections
+    using Chroma for user-specific data embeddings.
+
+    This function retrieves various types of user data, including personal details, followed artists, albums, new releases,
+    audiobooks, saved episodes, available devices, recently played tracks, queue, playlists, featured playlists, and
+    saved shows. For each data type, the corresponding details are processed to extract meaningful information and
+    generate embeddings, which are then used to update or create collections in the database.
+
+    Args:
+        object (Flask.application): The Flask application context object required for database access.
+
+    Raises:
+        Exception: Handles exceptions in data retrieval, embedding generation, and collection updates on a per-user basis.
+
+    """
     with object.app_context():
-        user_data = User.query.all()
+        if not user_id:
+            user_data = User.query.filter_by(user_id=user_id).first()
+        else:
+            user_data = User.query.all()
         access_token = [(user.access_token,user.refresh_token,user.id) for user in user_data]
 
         for index,value_tuple in enumerate(access_token):

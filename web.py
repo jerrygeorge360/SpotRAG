@@ -1,17 +1,17 @@
 from uuid import uuid4
-
+import threading
 from flask import Blueprint, render_template, request, url_for, session, redirect, flash, jsonify, Flask
-from flask_login import logout_user,LoginManager,login_required
+from flask_login import logout_user, LoginManager, login_required
 from flask_migrate import Migrate
 
 from chromaclass import Chroma, client_config
 from datapipeline import process_user_data
-from helpers import login_user_process, build_llm_prompt, requires_vector_data
+from helpers import login_user_process, build_llm_prompt, requires_vector_data, background_process
 from llmservice.instructions import first_instruction, second_instruction, third_instruction
 from llmservice.llm import llm
 from oauth import OauthFacade
 from dotenv import load_dotenv
-from models import User,db
+from models import User, db
 import logging
 import os
 from flask_apscheduler import APScheduler
@@ -42,10 +42,9 @@ scheduler = APScheduler()
 scheduler.init_app(app)
 scheduler.start()
 
-
 SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
 SPOTIFY_SECRET_KEY = os.getenv('SPOTIFY_CLIENT_SECRET')
-SPOTIFY_SCOPE =[
+SPOTIFY_SCOPE = [
     "user-read-private",
     "user-read-email",
     "user-library-read",
@@ -66,8 +65,25 @@ SPOTIFY_SCOPE =[
     "playlist-modify-private"
 ]
 MAX_HISTORY = 6
+user_processing_status = {}
+
+
 @app.before_request
 def assign_user():
+    """
+    Assigns or initializes a session for the current user before processing a request.
+
+    For authenticated users, this function ensures that a chat history session variable
+    is initialized and associated with the user. For unauthenticated users, it generates
+    a temporary session with a unique user identifier (UUID) and initializes an
+    anonymous chat history session variable.
+
+    Parameters:
+        None
+
+    Returns:
+        None
+    """
     if current_user.is_authenticated:
         # Use current_user.id as session identifier
         session.setdefault('chat_history', [])
@@ -76,24 +92,77 @@ def assign_user():
         session.setdefault('user_id', str(uuid4()))
         session.setdefault('chat_history', [])
 
+
 # User loader for Flask-Login
 @login_manager.user_loader
 def load_user(user_id):
+    """
+        Loads a user from the database by their user ID. This function is used by the
+        login manager to retrieve user information during the session management process.
+
+        Args:
+            user_id (str): The unique identifier of the user.
+
+        Returns:
+            User: The user object corresponding to the given user ID if found,
+            otherwise None.
+    """
     return User.query.get(user_id)
+
 
 # Error Handlers
 @app.errorhandler(401)
 def unauthorized(error):
+    """
+    Handles unauthorized access error (HTTP 401).
+
+    This error handler is triggered when a 401 Unauthorized error occurs in the application. It logs the error
+    message and returns a JSON response indicating the failure status and the reason for the authorization failure.
+
+    Args:
+        error: The error object containing information about the 401 Unauthorized error that occurred.
+
+    Returns:
+        A tuple containing a JSON response specifying the failure status and error message along with the HTTP
+        status code 401.
+    """
     logger.info(error)
     return jsonify({'status': 'failed', 'error': 'You need to be logged in to access this resource'}), 401
 
+
 @app.errorhandler(404)
 def page_not_found(e):
+    """
+    Handles the 404 error for the application and renders a custom 404 page.
+
+    Arguments:
+        e: Exception
+            The exception instance for the 404 error.
+
+    Returns:
+        tuple
+            A tuple containing the rendered 404 page and the 404 status code.
+    """
     return render_template('404.html'), 404
 
 
 @login_manager.unauthorized_handler
 def unauthorized():
+    """
+    Handles unauthorized access attempts for routes requiring login.
+
+    A callback function for the Flask-Login unauthorized_handler. When users try
+    to access a route that requires authentication without being logged in,
+    this function sends a feedback message and redirects them to the login view.
+
+    Raises:
+        Redirects the user to the URL specified by login_manager.login_view
+        after flashing a warning message.
+
+    Returns:
+        Response: A Flask response object resulting from a redirect to the
+        login view.
+    """
     flash("You need to log in to access this page.", "warning")
     return redirect(url_for(login_manager.login_view))
 
@@ -101,18 +170,56 @@ def unauthorized():
 @app.route('/')
 @login_required
 def index():
+    """
+    This function serves as the route for the index page of the application. It requires
+    user authentication and displays the main HTML template.
+
+    Summary:
+    The function is a Flask route handler that manages the display of the application's
+    index page. It ensures that only authenticated users can access this route and
+    renders the appropriate HTML template.
+
+    Decorators:
+    - app.route: Maps the function to the root URL ('/') of the application.
+    - login_required: Ensures the user must be logged in to access this route.
+
+    Returns:
+    Render a Flask template for the index page.
+    """
     return render_template('index.html')
+
+
+@app.route('/loader')
+@login_required
+def loader():
+    """
+    This function serves as a route handler for the '/loader' endpoint in a Flask web
+    application. The route is restricted to authenticated users due to the presence of
+    the `@login_required` decorator. When accessed, this function returns the
+    'loader.html' template for rendering by the Flask application.
+
+    Returns:
+        flask.Response: The rendered 'loader.html' template as the response for the
+        client.
+    """
+    return render_template('loader.html')
+
 
 @app.route('/login')
 def login():
     """
-    Renders the login page for the application.
+    Renders the login page along with authentication links for various services.
 
-    This route serves the login page where users can authenticate themselves
-    using OAuth providers like Twitch, GitHub, and Spotify.
+    This function is responsible for displaying the login page to the user and
+    providing dynamic authentication links for specified services. Links are
+    generated based on the OauthFacade handler configured for each service.
+
+    Parameters:
+        None
 
     Returns:
-        render_template: Renders the 'login.html' template with authentication links.
+        HTML template: The rendered 'login.html' template containing the
+        authentication links for the services.
     """
     logger.info('Rendering login page.')
 
@@ -124,8 +231,27 @@ def login():
 
     return render_template('login.html', auth_links=auth_links)
 
+
 @app.route('/callback')
 def callback_route():
+    """
+    Handles the OAuth callback endpoint for authorization process.
+
+    This route processes the result of an OAuth authorization request, retrieves the
+    authorization code from the request, exchanges it for an access token, and handles
+    user login flow.
+
+    Raises:
+        Redirects to /login with an error message in case of an error during the OAuth
+        process, missing required parameters, or unexpected scenarios.
+
+    Arguments:
+        None
+
+    Returns:
+        Response object: A redirect response to the appropriate path based on success
+        or failure during the OAuth process.
+    """
     code = request.args.get('code')
     state = request.args.get('state')
     scope = request.args.get('scope')
@@ -154,7 +280,13 @@ def callback_route():
             logger.info(response)
             if status_code == 201:
                 flash('Logged in successfully!', 'success')
-                return redirect('/')
+                try:
+                    user_processing_status[current_user.id] = 'processing'
+                    threading.Thread(target=background_process, args=(app, current_user.id)).start()
+                except Exception as err:
+                    logger.error(f'Error fetching from spotify pipeline{err}')
+                    user_processing_status[current_user.id] = 'error'
+                return redirect('/loader')
             elif hasattr(response, 'status') and response.status == 'error':
                 flash('Failed to log in.', 'error')
                 return redirect('/login')
@@ -173,16 +305,52 @@ def callback_route():
     flash('Invalid or missing code parameter.', 'error')
     return redirect('/login')
 
+
+@app.route('/processing-status')
+@login_required
+def processing_status():
+    """
+    Handles the processing status retrieval for the currently logged-in user.
+
+    This endpoint is designed to check the processing status of the logged-in user,
+    based on their user ID. It retrieves the status, logs the details for debugging
+    purposes, and responds with a JSON object containing"""
+    status = user_processing_status.get(current_user.id, 'unknown')
+    logger.info(f"[STATUS CHECK] User ID: {current_user.id}, Status: {status}")
+    return jsonify({'status': status})
+
+
+
 @app.route('/prompt', methods=['POST'])
 @login_required
 def prompt():
     """
-    Process a user's prompt:
-    1. Generate hallucinated expansion with LLM.
-    2. Identify relevant collections based on joint prompt.
-    3. Query those collections for data.
-    4. Feed retrieved data + original prompt into second LLM.
-    5. Return final generated response.
+    Handles user prompt processing, including generating AI responses and querying vector
+    databases if needed. It supports storing conversation history, determining when vector
+    database querying is necessary, and constructing additional data for response generation.
+
+    This function processes the input prompt in multiple stages:
+    1. Processes input JSON and validates its structure and content.
+    2. Retrieves or updates the in-memory conversation history.
+    3. Evaluates the necessity for querying a vector database and configures access if required.
+    4. Generates an AI-based hallucinated response.
+    5. Performs vector database queries using relevant collections.
+    6. Constructs final output using AI and any retrieved data.
+    7. Manages session chat history storage.
+
+    The endpoint is restricted to logged-in users and accepts POST methods only.
+
+    Arguments:
+        None
+
+    Returns:https://open.spotify.com/user/3156k2ink7zvduerdeixlxsxqvrq
+        JSON response indicating the success or failure of processing. On successful
+        execution, returns an AI-generated or data-enriched response. If any stage
+        of processing fails, provides a descriptive error message in the response.
+
+    Raises:
+        KeyError: If expected keys are missing in the JSON payload.
+        Exception: For general errors during any stage of processing. Error details are logged.
     """
     if not request.is_json:
         return jsonify({'status': 'failed', 'error': 'Invalid content type, expected application/json'}), 400
@@ -232,7 +400,6 @@ def prompt():
             filtered_collections = get_collection_from_prompt(model, joint_query, threshold=0.5)
             logger.info(f'Prediction result: {filtered_collections}')
 
-
             responses = []
 
             # Step 4: Query collections
@@ -241,11 +408,14 @@ def prompt():
                 logger.info(f"Querying collection: {full_collection_name}")
 
                 if chroma_obj.collection_exist(name=full_collection_name):
+
                     chroma_obj.use_collection(name=full_collection_name)
                     query_response = chroma_obj.query_collection(
                         param={'query': joint_query},
                         name=full_collection_name
                     )
+
+                    print(query_response['documents'])
 
                     if query_response:
                         responses.append({
@@ -323,8 +493,20 @@ def prompt():
         except Exception as e:
             logger.error(f'Error during LLM-only generation: {str(e)}')
             return jsonify({'status': 'failed', 'error': 'LLM-only response failed'}), 500
+
+
 @app.route('/logout')
 def logout():
+    """
+    Logs out the current user by clearing the session, removing stored
+    OAuth token data, and redirecting to the home page.
+
+    Args:
+        None
+
+    Returns:
+        redirect: Redirects the user to the home page after logout.
+    """
     logger.info('User initiated logout.')
 
     flash('You have been logged out successfully.', 'success')
@@ -335,6 +517,7 @@ def logout():
 
     return redirect('/')
 
+
 # @scheduler.task('interval', id='dynamic_job', minutes=20)
 # def job():
 #     print("🧠 This runs every 20 seconds")
@@ -343,8 +526,8 @@ scheduler.add_job(
     id='spotify_user_pipeline',
     func=process_user_data,
     trigger='interval',
-    hours=12,
+    minutes=20,
     kwargs={'object': app}
 )
-if __name__  == '__main__':
+if __name__ == '__main__':
     app.run(debug=True)

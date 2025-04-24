@@ -42,6 +42,47 @@ class ChromaObj(ABC):
     def use_collection(self, name: str): ...
 
 class Chroma(ChromaObj):
+    """
+    Represents a Chroma object for managing data collections, including creation,
+    access, modification, and querying.
+
+    The Chroma class provides an interface for organizing data into collections,
+    facilitating operations such as adding, updating, deleting, querying, and
+    listing collections. It enables users to interact with embedding-based
+    functionalities and manage metadata effectively.
+
+    Attributes:
+        client: The client object initialized from the provided configuration.
+        embedding_function: Reference to the embedding function used in operations.
+        collections: A dictionary holding the collections managed by the instance.
+        current_collection: The current active collection name.
+
+    Methods:
+        create_collection:
+            Creates a new collection and stores it within the local instance.
+        use_collection:
+            Sets the active collection for further operations.
+        _get_collection:
+            Retrieves a specific collection based on its name.
+        add_to_collection:
+            Adds documents, metadata, and ID entries to an existing collection.
+        update_to_collection:
+            Updates documents, metadata, and ID entries in an existing collection.
+        get_collection:
+            Fetches the reference of a specific collection by its name.
+        delete_from_collection:
+            Deletes entries from a collection based on IDs or conditions.
+        query_collection:
+            Queries a collection with specific parameters and retrieves results.
+        peek:
+            Returns a sample of documents in the specified or active collection.
+        count:
+            Returns the count of entries in the specified or active collection.
+        collection_exist:
+            Checks if a collection exists based on its name.
+        list_collections:
+            Lists all available collections from the client interface.
+    """
     def __init__(self, client):
         self.client = client['chroma']['client']()
         self.embedding_function = client['chroma']['embedding_function']()

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Processing...</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #121212;
+            color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #50fa7b;
+        }
+
+        p {
+            font-size: 1.2rem;
+            color: #bbb;
+            margin-bottom: 2rem;
+        }
+
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .spinner {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #50fa7b;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1.5s linear infinite;
+            margin-bottom: 2rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .progress-bar-container {
+            width: 80%;
+            max-width: 400px;
+            background: #444;
+            border-radius: 50px;
+            margin-top: 2rem;
+            height: 20px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 50%; /* Adjust based on actual progress */
+            background: #50fa7b;
+            border-radius: 50px;
+            animation: progressAnimation 5s linear infinite;
+        }
+
+        @keyframes progressAnimation {
+            0% { width: 0%; }
+            50% { width: 50%; }
+            100% { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-container">
+        <h2>We’re finishing up your login...</h2>
+        <p>Fetching Spotify details...</p>
+        <div class="spinner"></div>
+        <div class="progress-bar-container">
+            <div class="progress-bar"></div>
+        </div>
+    </div>
+
+    <script src="static/js/loader.js"></script>
+</body>
+</html>
