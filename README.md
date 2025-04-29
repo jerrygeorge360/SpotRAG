@@ -45,9 +45,9 @@
    SPOTIFY_CLIENT_SECRET=your_client_secret
    ```
 
-5. **Run the Application**
+5. **Run the Application Locally**
    ```bash
-   python -m web
+   flask run
    ```
 
    The application will be accessible at `http://localhost:5000`.
