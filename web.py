@@ -316,7 +316,7 @@ def processing_status():
     This endpoint is designed to check the processing status of the logged-in user,
     based on their user ID. It retrieves the status, logs the details for debugging
     purposes, and responds with a JSON object containing"""
-    status = user_processing_status.get(current_user.id, 'unknown')
+    status = user_processing_status.get(current_user.id)
     logger.info(f"[STATUS CHECK] User ID: {current_user.id}, Status: {status}")
     return jsonify({'status': status})
 
