@@ -2,7 +2,7 @@ from uuid import uuid4
 import threading
 from flask import render_template, request, url_for, session, redirect, flash, jsonify, Flask
 from flask_login import logout_user, LoginManager, login_required
-from flask_migrate import Migrate
+from flask_migrate import Migrate,upgrade
 
 from chromaclass import Chroma, client_config
 from datapipeline import process_user_data
@@ -67,6 +67,7 @@ SPOTIFY_SCOPE = [
 MAX_HISTORY = 6
 
 
+
 @app.before_request
 def assign_user():
     """
@@ -90,6 +91,7 @@ def assign_user():
         # For anonymous users (not logged in), generate temp session
         session.setdefault('user_id', str(uuid4()))
         session.setdefault('chat_history', [])
+
 
 
 # User loader for Flask-Login
@@ -528,6 +530,9 @@ scheduler.add_job(
     minutes=20,
     kwargs={'object': app}
 )
+
+
 if __name__ == '__main__':
     if os.environ.get('FLASK_ENV') == 'development':
+
         app.run(debug=True)  # Only run Flask's built-in server in development mode
