@@ -57,15 +57,15 @@
 
 ```mermaid
 flowchart TD
-   User([User])
-   WebApp([Flask Web App<br>web.py])
-   Auth([Spotify OAuth<br>oauth.py])
-   Extract([Spotify Data Extractors<br>spotifyextractors.py])
-   Pipeline([Data Pipeline & RAG<br>datapipeline.py])
-   Chroma([Chroma Vector DB<br>chromaclass.py])
-   Classifier([Intent Classifier<br>prompt_classifier.joblib])
-   LLM([LLM Service<br>llmservice/llm.py])
-   Response([Response<br>to User])
+   User[User]
+   WebApp[Flask Web App<br>web.py]
+   Auth[Spotify OAuth<br>oauth.py]
+   Extract[Spotify Data Extractors<br>spotifyextractors.py]
+   Pipeline[Data Pipeline & RAG<br>datapipeline.py]
+   Chroma[Chroma Vector DB<br>chromaclass.py]
+   Classifier[Intent Classifier<br>prompt_classifier.joblib]
+   LLM[LLM Service<br>llmservice/llm.py]
+   Response[Response<br>to User]
 
    User -- "Prompt / Query" --> WebApp
    WebApp -- "Authenticate" --> Auth
@@ -83,8 +83,8 @@ flowchart TD
    LLM -- "Generate Answer" --> Response
    Response -- "Show Answer" --> User
 
-   Pipeline -- "Error/Status" -.-> WebApp
-   WebApp -- "Feedback/Error" -.-> User
+   Pipeline -.->|Error/Status| WebApp
+   WebApp -.->|Feedback/Error| User
 
    subgraph Spotify
       Auth
