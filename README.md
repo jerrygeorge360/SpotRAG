@@ -52,6 +52,25 @@
 
    The application will be accessible at `http://localhost:5000`.
 
+
+## 🗺️ Architecture
+
+```mermaid
+flowchart TD
+   A[User] -->|Prompt| B[Flask Web App<br>(web.py)]
+   B --> C[Intent Classifier<br>(prompt_classifier.joblib)]
+   C -->|Intent| D{Needs Vector Data?}
+   D -- No --> E[LLM Service<br>(llmservice/llm.py)]
+   D -- Yes --> F[Chroma Vector DB<br>(chromaclass.py)]
+   F --> G[Vector Search<br>(datapipeline.py)]
+   G --> H[Top Docs]
+   H --> E
+   E --> I[Response]
+   I --> A
+   B -->|Spotify Auth| J[Spotify API<br>(oauth.py, spotifyextractors.py)]
+   J --> F
+```
+
 ## 🛠️ Project Structure
 
 - `main.py`: Entry point of the application.
