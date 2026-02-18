@@ -2,14 +2,14 @@
 
 **SpotRAG** is an AI-powered music assistant that utilizes Spotify data and Retrieval-Augmented Generation (RAG) to answer in-depth questions about songs, artists, and genres. Designed for speed, intelligence, and conversational interaction, SpotRAG offers a seamless experience for music enthusiasts.
 
-## 🎧 Features
+## Features
 
 - **Conversational Music Queries**: Engage in natural language conversations to explore music-related information.
 - **Deep Insights**: Obtain detailed answers about songs, artists, and genres using advanced AI techniques.
 - **Spotify Integration**: Leverage Spotify's extensive music data for accurate and up-to-date information.
 - **Fast and Smart Responses**: Experience quick and intelligent answers powered by RAG.
 
-## 🚀 Getting Started
+## Getting Started
 
 *Note: The following setup instructions are based on standard practices, as specific details are not provided in the repository.*
 
@@ -53,7 +53,7 @@
    The application will be accessible at `http://localhost:5000`.
 
 
-## 🗺️ Architecture
+## Architecture
 
 ```mermaid
 flowchart TD
@@ -92,7 +92,7 @@ flowchart TD
    end
 ```
 
-## 🛠️ Project Structure
+## Project Structure
 
 - `main.py`: Entry point of the application.
 - `spotifyextractors.py`: Handles data extraction from Spotify.
@@ -100,10 +100,10 @@ flowchart TD
 - `templates/`: Contains HTML templates for the web interface.
 - `static/`: Holds static files like CSS and JavaScript.
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License. See the [LICENSE](https://github.com/jerrygeorge360/SpotRAG/blob/main/LICENSE) file for details.
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please fork the repository and submit a pull request for any enhancements or bug fixes.
